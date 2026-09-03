@@ -1,0 +1,11 @@
+.env
+.venv/
+.DS_Store
+__pycache__/
+.pytest_cache/
+*.py[cod]
+
+results/*
+!results/.gitkeep
+!results/report.md
+!results/final_run.jsonl

@@ -1,0 +1,106 @@
+{
+  "_todo_verify": "TODO-VERIFY: replace with authoritative field definitions before publication",
+  "department": "emergency",
+  "display_name": "急诊",
+  "sections": [
+    {
+      "id": "visit_time",
+      "label": "就诊时间",
+      "required": true,
+      "order": 1,
+      "rules": [
+        {"id": "EM-REQ-001", "type": "required", "message": "就诊时间不得为空"},
+        {"id": "EM-FMT-002", "type": "timestamp_format", "message": "就诊时间须使用 YYYY-MM-DD HH:MM 格式"}
+      ]
+    },
+    {
+      "id": "chief_complaint",
+      "label": "主诉",
+      "required": true,
+      "order": 2,
+      "rules": [
+        {"id": "EM-REQ-101", "type": "required", "message": "主诉不得为空"},
+        {"id": "EM-LEN-102", "type": "max_length", "value": 20, "message": "主诉应在20字以内"},
+        {"id": "EM-FMT-103", "type": "must_match", "value": "(天|日|周|月|年|小时|分钟)", "message": "主诉须包含症状持续时间"},
+        {"id": "EM-TERM-104", "type": "must_not_match", "value": "(患者说|病人自述说|据说)", "message": "主诉应使用规范医学表述，不得转述口语"}
+      ]
+    },
+    {
+      "id": "history_present_illness",
+      "label": "现病史",
+      "required": true,
+      "order": 3,
+      "rules": [
+        {"id": "EM-REQ-201", "type": "required", "message": "现病史不得为空"},
+        {"id": "EM-LEN-202", "type": "min_length", "value": 15, "message": "现病史应记录症状发生和变化"}
+      ]
+    },
+    {
+      "id": "allergy_history",
+      "label": "过敏史",
+      "required": true,
+      "order": 4,
+      "rules": [
+        {"id": "EM-REQ-301", "type": "required", "message": "过敏史不得为空"}
+      ]
+    },
+    {
+      "id": "vital_signs",
+      "label": "生命体征",
+      "required": true,
+      "order": 5,
+      "rules": [
+        {"id": "EM-REQ-401", "type": "required", "message": "生命体征不得为空"},
+        {"id": "EM-FMT-402", "type": "numeric_fields", "value": ["T", "P", "R", "BP", "SpO2"], "message": "生命体征必须逐项使用字面字段标签 T、P、R、BP、SpO2 记录对应数值"}
+      ]
+    },
+    {
+      "id": "physical_exam",
+      "label": "体格检查",
+      "required": true,
+      "order": 6,
+      "rules": [
+        {"id": "EM-REQ-501", "type": "required", "message": "体格检查不得为空"}
+      ]
+    },
+    {
+      "id": "ancillary_exam",
+      "label": "辅助检查",
+      "required": false,
+      "order": 7,
+      "rules": []
+    },
+    {
+      "id": "initial_diagnosis",
+      "label": "初步诊断",
+      "required": true,
+      "order": 8,
+      "rules": [
+        {"id": "EM-REQ-601", "type": "required", "message": "初步诊断不得为空"}
+      ]
+    },
+    {
+      "id": "emergency_treatment",
+      "label": "急诊处置",
+      "required": true,
+      "order": 9,
+      "rules": [
+        {"id": "EM-REQ-701", "type": "required", "message": "急诊处置不得为空"},
+        {"id": "EM-FMT-702", "type": "must_match", "value": "\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}", "message": "急诊处置须至少包含一个 YYYY-MM-DD HH:MM 时间戳"}
+      ]
+    },
+    {
+      "id": "disposition",
+      "label": "去向",
+      "required": true,
+      "order": 10,
+      "rules": [
+        {"id": "EM-REQ-801", "type": "required", "message": "去向不得为空"},
+        {"id": "EM-FMT-802", "type": "must_match", "value": "^(留观|收入院|离院|转院)$", "message": "去向须为留观、收入院、离院或转院之一"}
+      ]
+    }
+  ],
+  "global_rules": [
+    {"id": "EM-ORD-900", "type": "section_order", "message": "章节顺序须符合规范"}
+  ]
+}

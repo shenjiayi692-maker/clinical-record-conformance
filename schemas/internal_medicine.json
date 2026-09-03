@@ -1,0 +1,85 @@
+{
+  "_todo_verify": "TODO-VERIFY: replace with authoritative field definitions before publication",
+  "department": "internal_medicine",
+  "display_name": "内科",
+  "sections": [
+    {
+      "id": "chief_complaint",
+      "label": "主诉",
+      "required": true,
+      "order": 1,
+      "rules": [
+        {"id": "IM-REQ-001", "type": "required", "message": "主诉不得为空"},
+        {"id": "IM-LEN-002", "type": "max_length", "value": 20, "message": "主诉应在20字以内"},
+        {"id": "IM-FMT-003", "type": "must_match", "value": "(天|日|周|月|年|小时)", "message": "主诉须包含症状持续时间"},
+        {"id": "IM-TERM-004", "type": "must_not_match", "value": "(患者说|病人自述说|据说)", "message": "主诉应使用规范医学表述，不得转述口语"}
+      ]
+    },
+    {
+      "id": "history_present_illness",
+      "label": "现病史",
+      "required": true,
+      "order": 2,
+      "rules": [
+        {"id": "IM-REQ-101", "type": "required", "message": "现病史不得为空"},
+        {"id": "IM-LEN-102", "type": "min_length", "value": 20, "message": "现病史应完整描述起病与症状演变"}
+      ]
+    },
+    {
+      "id": "past_history",
+      "label": "既往史",
+      "required": true,
+      "order": 3,
+      "rules": [
+        {"id": "IM-REQ-201", "type": "required", "message": "既往史不得为空"}
+      ]
+    },
+    {
+      "id": "allergy_history",
+      "label": "过敏史",
+      "required": true,
+      "order": 4,
+      "rules": [
+        {"id": "IM-REQ-301", "type": "required", "message": "过敏史不得为空"}
+      ]
+    },
+    {
+      "id": "physical_exam",
+      "label": "体格检查",
+      "required": true,
+      "order": 5,
+      "rules": [
+        {"id": "IM-REQ-401", "type": "required", "message": "体格检查不得为空"},
+        {"id": "IM-FMT-402", "type": "numeric_fields", "value": ["T", "P", "R", "BP"], "message": "体格检查必须逐项使用字面字段标签 T、P、R、BP 记录对应数值"}
+      ]
+    },
+    {
+      "id": "ancillary_exam",
+      "label": "辅助检查",
+      "required": false,
+      "order": 6,
+      "rules": []
+    },
+    {
+      "id": "initial_diagnosis",
+      "label": "初步诊断",
+      "required": true,
+      "order": 7,
+      "rules": [
+        {"id": "IM-REQ-501", "type": "required", "message": "初步诊断不得为空"}
+      ]
+    },
+    {
+      "id": "plan",
+      "label": "处理意见",
+      "required": true,
+      "order": 8,
+      "rules": [
+        {"id": "IM-REQ-601", "type": "required", "message": "处理意见不得为空"}
+      ]
+    }
+  ],
+  "global_rules": [
+    {"id": "IM-ORD-900", "type": "section_order", "message": "章节顺序须符合规范"}
+  ]
+}
