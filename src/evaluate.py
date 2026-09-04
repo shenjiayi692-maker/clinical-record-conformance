@@ -9,12 +9,10 @@ from pathlib import Path
 from statistics import fmean, median
 from typing import Any
 
-from src.schema import load_schema
-from src.validator import PARSE_FAILURE_ID, has_numeric_field
+from src.validator import has_numeric_field
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SCHEMA_DIR = ROOT / "schemas"
 
 
 def read_log(path: str | Path) -> list[dict[str, Any]]:
@@ -40,14 +38,6 @@ def read_log(path: str | Path) -> list[dict[str, Any]]:
     if not rows:
         raise ValueError(f"empty run log: {path}")
     return rows
-
-
-def _rule_types() -> dict[str, str]:
-    result = {PARSE_FAILURE_ID: "parse"}
-    for filename in ("internal_medicine.json", "emergency.json"):
-        schema = load_schema(SCHEMA_DIR / filename)
-        result.update({rule_id: rule.type for rule_id, rule in schema.rule_by_id.items()})
-    return result
 
 
 def _group_records(rows: list[dict[str, Any]]) -> dict[tuple[str, str, str], list[dict[str, Any]]]:
@@ -85,6 +75,14 @@ def _omitted_field_is_populated(row: dict[str, Any], field_path: str) -> bool:
     return bool(content.strip())
 
 
+def _record_is_source_grounded(row: dict[str, Any]) -> bool:
+    """Return true when no manifest-controlled omission was populated."""
+    return not any(
+        _omitted_field_is_populated(row, field_path)
+        for field_path in row.get("omitted_required_fields", [])
+    )
+
+
 def _grounding_metrics(record_groups: list[list[dict[str, Any]]]) -> dict[str, int | float]:
     opportunities = 0
     unsupported_fills = 0
@@ -94,12 +92,11 @@ def _grounding_metrics(record_groups: list[list[dict[str, Any]]]) -> dict[str, i
         final = attempts[-1]
         omissions = final.get("omitted_required_fields", [])
         rule_ids = final.get("omitted_field_rule_ids", {})
-        record_has_unsupported_fill = False
+        record_has_unsupported_fill = not _record_is_source_grounded(final)
         for field_path in omissions:
             opportunities += 1
             populated = _omitted_field_is_populated(final, field_path)
             unsupported_fills += populated
-            record_has_unsupported_fill = record_has_unsupported_fill or populated
             rule_id = rule_ids.get(field_path)
             surfaced += bool(rule_id and rule_id in final["violated_rule_ids"])
         records_with_unsupported_fills += record_has_unsupported_fill
@@ -114,19 +111,9 @@ def _grounding_metrics(record_groups: list[list[dict[str, Any]]]) -> dict[str, i
     }
 
 
-def _failure_class(rule_type: str) -> str:
-    if rule_type == "required":
-        return "required"
-    if rule_type == "parse":
-        return "parse_structure"
-    return "format_terminology_order"
-
-
-def _recovery_metrics(
-    record_groups: list[list[dict[str, Any]]], rule_types: dict[str, str]
-) -> tuple[dict[str, dict[str, int | float | None]], dict[str, dict[str, int | float | None]], dict[str, dict[str, int | float | None]]]:
-    by_type: dict[str, list[int]] = defaultdict(lambda: [0, 0])
-    by_class: dict[str, list[int]] = defaultdict(lambda: [0, 0])
+def _recovery_by_root_cause(
+    record_groups: list[list[dict[str, Any]]],
+) -> dict[str, dict[str, int | float | None]]:
     by_root: dict[str, list[int]] = defaultdict(lambda: [0, 0])
     for attempts in record_groups:
         first = attempts[0]
@@ -134,12 +121,9 @@ def _recovery_metrics(
         source_absence_rules = set(first.get("omitted_field_rule_ids", {}).values())
         for rule_id in first["violated_rule_ids"]:
             recovered = rule_id not in final_failures
-            rule_type = rule_types.get(rule_id, "unknown")
-            rule_class = _failure_class(rule_type)
             root = "source_information_absent" if rule_id in source_absence_rules else "model_or_format_repairable"
-            for bucket, key in ((by_type, rule_type), (by_class, rule_class), (by_root, root)):
-                bucket[key][0] += 1
-                bucket[key][1] += recovered
+            by_root[root][0] += 1
+            by_root[root][1] += recovered
 
     def finish(raw: dict[str, list[int]]) -> dict[str, dict[str, int | float | None]]:
         result: dict[str, dict[str, int | float | None]] = {}
@@ -152,28 +136,31 @@ def _recovery_metrics(
             }
         return result
 
-    return finish(by_type), finish(by_class), finish(by_root)
+    return finish(by_root)
 
 
-def _slice_metrics(
-    record_groups: list[list[dict[str, Any]]], arm: str, rule_types: dict[str, str]
-) -> dict[str, Any]:
+def _slice_metrics(record_groups: list[list[dict[str, Any]]], arm: str) -> dict[str, Any]:
     first_rows = [attempts[0] for attempts in record_groups]
     final_rows = [attempts[-1] for attempts in record_groups]
     record_latency = [sum(row["latency_ms"] for row in attempts) for attempts in record_groups]
     record_cost = [sum(float(row.get("estimated_cost_usd", 0.0)) for row in attempts) for attempts in record_groups]
     first_failures = Counter(rule_id for row in first_rows for rule_id in row["violated_rule_ids"])
-    first_failure_types = Counter(rule_types.get(rule_id, "unknown") for rule_id in first_failures.elements())
     first_pass_rate = fmean(not row["violated_rule_ids"] for row in first_rows)
     pass_rate_after_budget = fmean(not row["violated_rule_ids"] for row in final_rows)
+    conformant_and_grounded = [
+        not row["violated_rule_ids"] and _record_is_source_grounded(row)
+        for row in final_rows
+    ]
     max_index = max(range(len(record_groups)), key=record_latency.__getitem__)
     max_group = record_groups[max_index]
     metrics: dict[str, Any] = {
         "records": len(record_groups),
-        "field_completeness": fmean(float(row["field_completeness"]) for row in final_rows),
+        "required_field_population_rate": fmean(float(row["field_completeness"]) for row in final_rows),
         "first_pass_rate": first_pass_rate,
         "final_pass_rate": pass_rate_after_budget if arm == "C" else None,
         "pass_rate_after_budget": pass_rate_after_budget,
+        "conformant_and_grounded_records": sum(conformant_and_grounded),
+        "conformant_and_grounded_rate": fmean(conformant_and_grounded),
         "median_latency_ms": float(median(record_latency)),
         "max_latency_ms": float(record_latency[max_index]),
         "max_latency_record_id": max_group[0]["record_id"],
@@ -181,12 +168,9 @@ def _slice_metrics(
         "total_cost_usd": sum(record_cost),
         "mean_cost_usd": fmean(record_cost),
         "per_rule_failures": dict(first_failures.most_common()),
-        "per_rule_type_failures": dict(first_failure_types.most_common()),
         "grounding": _grounding_metrics(record_groups),
         "retry_distribution": None,
         "unrecoverable": [],
-        "recovery_by_rule_type": {},
-        "recovery_by_failure_class": {},
         "recovery_by_root_cause": {},
     }
     if arm == "C":
@@ -206,10 +190,7 @@ def _slice_metrics(
             for attempts in record_groups
             if attempts[-1]["violated_rule_ids"]
         ]
-        by_type, by_class, by_root = _recovery_metrics(record_groups, rule_types)
-        metrics["recovery_by_rule_type"] = by_type
-        metrics["recovery_by_failure_class"] = by_class
-        metrics["recovery_by_root_cause"] = by_root
+        metrics["recovery_by_root_cause"] = _recovery_by_root_cause(record_groups)
     return metrics
 
 
@@ -237,7 +218,6 @@ def evaluate_log(path: str | Path) -> dict[str, Any]:
     log_path = Path(path)
     rows = read_log(log_path)
     grouped = _group_records(rows)
-    rule_types = _rule_types()
     arms = sorted({key[0] for key in grouped})
     departments = sorted({key[1] for key in grouped})
     overall: dict[str, Any] = {}
@@ -245,7 +225,7 @@ def evaluate_log(path: str | Path) -> dict[str, Any]:
     by_style: dict[str, dict[str, dict[str, Any]]] = {}
     for arm in arms:
         arm_groups = [attempts for (row_arm, _, _), attempts in grouped.items() if row_arm == arm]
-        overall[arm] = _slice_metrics(arm_groups, arm, rule_types)
+        overall[arm] = _slice_metrics(arm_groups, arm)
         breakdown[arm] = {}
         by_style[arm] = {}
         for department in departments:
@@ -256,12 +236,12 @@ def evaluate_log(path: str | Path) -> dict[str, Any]:
             ]
             if not department_groups:
                 continue
-            breakdown[arm][department] = _slice_metrics(department_groups, arm, rule_types)
+            breakdown[arm][department] = _slice_metrics(department_groups, arm)
             by_style[arm][department] = {}
             styles = sorted({attempts[0]["input_style"] for attempts in department_groups})
             for style in styles:
                 style_groups = [attempts for attempts in department_groups if attempts[0]["input_style"] == style]
-                by_style[arm][department][style] = _slice_metrics(style_groups, arm, rule_types)
+                by_style[arm][department][style] = _slice_metrics(style_groups, arm)
 
     emergency_case_sets: dict[str, set[str]] = defaultdict(set)
     complete_emergency_case_sets: dict[str, set[str]] = defaultdict(set)
@@ -289,7 +269,7 @@ def evaluate_log(path: str | Path) -> dict[str, Any]:
                 and not attempts[0]["omitted_required_fields"]
             ]
             if style_groups:
-                complete_source_by_style[arm][style] = _slice_metrics(style_groups, arm, rule_types)
+                complete_source_by_style[arm][style] = _slice_metrics(style_groups, arm)
 
     try:
         source_log = str(log_path.resolve().relative_to(ROOT.resolve()))

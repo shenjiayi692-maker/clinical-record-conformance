@@ -115,14 +115,18 @@ def test_evaluator_uses_first_failures_and_end_to_end_retry_latency(tmp_path):
     assert arm_c["first_pass_rate"] == 0.0
     assert arm_c["final_pass_rate"] == 1.0
     assert arm_c["pass_rate_after_budget"] == 1.0
-    assert arm_c["field_completeness"] == 1.0
+    assert arm_c["required_field_population_rate"] == 1.0
+    assert arm_c["conformant_and_grounded_records"] == 1
+    assert arm_c["conformant_and_grounded_rate"] == 1.0
     assert arm_c["median_latency_ms"] == 250
     assert arm_c["max_latency_ms"] == 250
     assert arm_c["max_latency_attempts"] == 2
     assert arm_c["retry_distribution"] == {2: 1}
     assert arm_c["per_rule_failures"] == {"IM-REQ-001": 1}
     report = render_report(metrics)
-    assert "Three-arm result" in report
+    assert "Headline: conformance without invention" in report
+    assert "Required-field population" in report
+    assert "Field completeness" not in report
     assert "Median record latency" in report
     assert "p95" not in report
     assert "First-attempt failures by rule" in report
@@ -149,7 +153,7 @@ def test_fake_client_runs_all_three_arms_end_to_end(monkeypatch, tmp_path):
     assert len(rows) == 9
     assert all(row["violated_rule_ids"] == [] for row in rows)
     assert (tmp_path / "final_run.jsonl").is_file()
-    assert "Three-arm result" in (tmp_path / "report.md").read_text(encoding="utf-8")
+    assert "Headline: conformance without invention" in (tmp_path / "report.md").read_text(encoding="utf-8")
 
 
 def test_resume_skips_finished_paths_and_continues_c_attempt_number(monkeypatch, tmp_path):
@@ -327,11 +331,33 @@ def test_grounding_recovery_types_and_bc_pairing_are_mechanical(tmp_path):
         "left_unpopulated": 1,
         "surfaced_as_violations": 1,
     }
-    assert metrics["overall"]["C"]["recovery_by_failure_class"]["required"]["recovery_rate"] == 0.0
-    assert metrics["overall"]["C"]["recovery_by_failure_class"]["format_terminology_order"]["recovery_rate"] == 1.0
+    assert metrics["overall"]["A"]["conformant_and_grounded_rate"] == 0.0
+    assert metrics["overall"]["B"]["conformant_and_grounded_rate"] == 0.0
+    assert metrics["overall"]["C"]["conformant_and_grounded_rate"] == 0.5
     assert metrics["overall"]["C"]["recovery_by_root_cause"]["source_information_absent"]["remaining"] == 1
     assert metrics["overall"]["C"]["recovery_by_root_cause"]["model_or_format_repairable"]["recovered"] == 1
     assert metrics["bc_first_attempt_pairing"]["same_structured_outputs"] == 2
     report = render_report(metrics)
     assert "Arm A produced content for **1 of 1**" in report
     assert "Source information absent" in report
+    assert "By operational failure class" not in report
+    assert "By rule type" not in report
+
+
+def test_committed_run_reverses_a_c_ranking_on_joint_metric():
+    metrics = evaluate_log(ROOT / "results" / "final_run.jsonl")
+    arm_a = metrics["overall"]["A"]
+    arm_b = metrics["overall"]["B"]
+    arm_c = metrics["overall"]["C"]
+
+    assert arm_a["pass_rate_after_budget"] == pytest.approx(56 / 60)
+    assert arm_c["pass_rate_after_budget"] == pytest.approx(49 / 60)
+    assert arm_a["conformant_and_grounded_records"] == 47
+    assert arm_b["conformant_and_grounded_records"] == 46
+    assert arm_c["conformant_and_grounded_records"] == 48
+    assert arm_c["conformant_and_grounded_rate"] > arm_a["conformant_and_grounded_rate"]
+    assert arm_c["total_cost_usd"] / arm_a["total_cost_usd"] == pytest.approx(1.8919, rel=1e-4)
+
+    styles = metrics["by_arm_department_and_input_style"]["C"]["emergency"]
+    assert styles["narrative"]["conformant_and_grounded_records"] == 14
+    assert styles["fragmented"]["conformant_and_grounded_records"] == 14

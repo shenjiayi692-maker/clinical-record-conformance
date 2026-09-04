@@ -2,15 +2,17 @@
 
 Source log: `results/final_run.jsonl`
 
-## Three-arm result
+## Headline: conformance without invention
 
-| Arm | Records | Source-grounded records | Field completeness | Pass rate after arm budget | Median record latency | Observed maximum | Unsupported fills | Total estimated cost |
-|---|---:|---:|---:|---:|---:|---|---:|---:|
-| A — prompt only | 60 | 83.3% | 100.0% | 93.3% | 1703 ms | 5669 ms (`em_11`, 1 call) | 10 | $0.1958 |
-| B — template constrained | 60 | 98.3% | 98.3% | 76.7% | 2395 ms | 5798 ms (`em_narrative_01`, 1 call) | 1 | $0.3525 |
-| C — template + validator loop | 60 | 98.3% | 98.3% | 81.7% | 2163 ms | 9880 ms (`em_narrative_12`, 2 calls) | 1 | $0.3704 |
+Prompt-only Arm A achieved the highest raw conformance at **93.3%**, while populating **10 of 12** fields absent from the source. Arm C's lower raw conformance of **81.7%** was often the safer behavior: it left **11** controlled omissions unpopulated and surfaced **11** as violations. Retries recovered **100.0%** of model extraction or formatting failures and **0.0%** of source-information absences, so the validator should route failures rather than blindly retry them.
 
-Field completeness is measured on final outputs and is not a grounding metric. Latency is end-to-end per record; Arm C includes all validator retries. The observed maximum identifies the record and API-call count so a single API tail is not presented as a population percentile.
+| Arm | Records | **Conformant and grounded** | Raw conformance | Source-grounded records | Required-field population | Unsupported fills | Total estimated cost |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| A — prompt only | 60 | **78.3%** | 93.3% | 83.3% | 100.0% | 10 | $0.1958 |
+| B — template constrained | 60 | **76.7%** | 76.7% | 98.3% | 98.3% | 1 | $0.3525 |
+| C — template + validator loop | 60 | **80.0%** | 81.7% | 98.3% | 98.3% | 1 | $0.3704 |
+
+**Conformant and grounded** means that the final record passed every rule and did not populate any manifest-controlled omission. This is stricter than raw conformance, but it is not a general factuality score: grounding is measured only for the benchmark's deliberately omitted fields. **Required-field population** replaces the misleading term “field completeness”; it measures whether required sections contain text, not whether that text is supported.
 
 ## Ground-truth omission check
 
@@ -24,25 +26,39 @@ The corpus manifest records every intentionally absent required field or require
 
 Arm A produced content for **10 of 12** required fields or subfields that were absent from the source dictation. Arm C left **11 of 12** unpopulated and surfaced **11** as rule violations.
 
+## Operational cost and latency
+
+The full Arm C pipeline cost **1.9×** as much as prompt-only Arm A in this run, while C cost **5.1%** more than template-only Arm B. The 1.9× comparison is the observed price of the whole constrained pipeline, not a causal estimate for grounding alone; most of the gap already appears in structured generation, and only 3 Arm C records made more than one API call.
+
+| Arm | Median record latency | Observed maximum |
+|---|---:|---|
+| A — prompt only | 1703 ms | 5669 ms (`em_11`, 1 call) |
+| B — template constrained | 2395 ms | 5798 ms (`em_narrative_01`, 1 call) |
+| C — template + validator loop | 2163 ms | 9880 ms (`em_narrative_12`, 2 calls) |
+
+Arm C's median happens to be lower than Arm B's, despite including retries. With 60 records and only 3 retried records, that ordering is within run-to-run API latency noise and should not be read as free retries; retry overhead is visible in the extra calls and cost.
+
 ## Paired emergency input-shape control
 
 The same 20 synthetic emergency cases were rendered twice from identical source-fact fingerprints. The emergency schema and generation settings stayed fixed; only dictation shape changed.
 
-| Arm | Narrative conformance | Fragmented conformance | Fragmented minus narrative | Narrative source-grounded | Fragmented source-grounded |
-|---|---:|---:|---:|---:|---:|
-| A — prompt only | 95.0% | 85.0% | -10.0 pp | 75.0% | 75.0% |
-| B — template constrained | 60.0% | 70.0% | +10.0 pp | 95.0% | 100.0% |
-| C — template + validator loop | 70.0% | 75.0% | +5.0 pp | 100.0% | 95.0% |
+| Arm | Narrative raw conformance | Fragmented raw conformance | Narrative conformant + grounded | Fragmented conformant + grounded |
+|---|---:|---:|---:|---:|
+| A — prompt only | 95.0% | 85.0% | 70.0% | 65.0% |
+| B — template constrained | 60.0% | 70.0% | 60.0% | 70.0% |
+| C — template + validator loop | 70.0% | 75.0% | 70.0% | 70.0% |
 
-Holding the record standard constant, this table isolates the effect of narrative versus fragmented dictation instead of conflating input shape with department schema size.
+This is a null result for the input-shape hypothesis. B and C were nominally higher on fragmented raw conformance, not lower; for C the 75% versus 70% difference is one record out of 20. That record, `em_15`, passed only because its fragmented output populated an absent visit time, while `em_narrative_15` honestly left it blank. The joint metric is therefore 70% in both C conditions.
+
+The synthetic fragmentation transformation reorders and interrupts facts but deliberately preserves them. It tests disorder without information loss, not omitted speech or ASR deletion. Within this benchmark, source omission is the mechanism the controlled cases clearly expose; word-order disruption by itself does not show a consistent effect.
 
 The following sensitivity check excludes the six emergency cases with intentional source omissions, leaving 14 complete-source pairs:
 
-| Arm | Complete-source narrative | Complete-source fragmented | Fragmented minus narrative |
-|---|---:|---:|---:|
-| A — prompt only | 100.0% | 92.9% | -7.1 pp |
-| B — template constrained | 85.7% | 100.0% | +14.3 pp |
-| C — template + validator loop | 100.0% | 100.0% | +0.0 pp |
+| Arm | Complete-source narrative | Complete-source fragmented |
+|---|---:|---:|
+| A — prompt only | 100.0% | 92.9% |
+| B — template constrained | 85.7% | 100.0% |
+| C — template + validator loop | 100.0% | 100.0% |
 
 ## First-attempt pairing check
 
@@ -50,40 +66,25 @@ Arms B and C use the same first-attempt prompt, model snapshot, seed, and temper
 
 ## Arm C failure diagnosis
 
-### By operational failure class
-
-| Failure group | Initial instances | Recovered | Remaining | Recovery rate |
-|---|---:|---:|---:|---:|
-| Format / terminology / order | 5 | 3 | 2 | 60.0% |
-| Required information | 9 | 0 | 9 | 0.0% |
-
-### By rule type
-
-| Failure group | Initial instances | Recovered | Remaining | Recovery rate |
-|---|---:|---:|---:|---:|
-| Required pattern | 3 | 3 | 0 | 100.0% |
-| Numeric fields | 2 | 0 | 2 | 0.0% |
-| Required | 9 | 0 | 9 | 0.0% |
-
-### By source-aware root cause
-
 | Failure group | Initial instances | Recovered | Remaining | Recovery rate |
 |---|---:|---:|---:|---:|
 | Model extraction or formatting | 3 | 3 | 0 | 100.0% |
 | Source information absent | 11 | 0 | 11 | 0.0% |
 
-A rule's syntax does not by itself determine recoverability. For example, a `numeric_fields` failure caused by a source dictation that omits `SpO2` is a source-information absence, not a broken feedback loop. The appropriate action is to surface the gap for human completion, not regenerate until a value appears.
+Retries repaired every observed model extraction or formatting failure and none of the source-information absences. The validator's role is therefore routing: repairable model failures go back to the model, while missing source facts go to a human.
+
+The earlier suspicion that `EM-FMT-402` exposed a broken feedback path was incorrect. Its source dictation omitted `SpO2`; the source-aware diagnosis correctly treats that numeric-rule failure as missing information and sends it to human review rather than retrying until the model invents a value.
 
 ## Department breakdown
 
-| Arm | Department | Records | Field completeness | First-pass rate | Pass rate after arm budget | Median latency | Observed maximum |
-|---|---|---:|---:|---:|---:|---:|---|
-| A — prompt only | Emergency | 40 | 100.0% | 90.0% | 90.0% | 1816 ms | 5669 ms (`em_11`, 1 call) |
-| A — prompt only | Internal medicine | 20 | 100.0% | 100.0% | 100.0% | 1584 ms | 2187 ms (`im_01`, 1 call) |
-| B — template constrained | Emergency | 40 | 97.5% | 65.0% | 65.0% | 3957 ms | 5798 ms (`em_narrative_01`, 1 call) |
-| B — template constrained | Internal medicine | 20 | 100.0% | 100.0% | 100.0% | 1552 ms | 2345 ms (`im_02`, 1 call) |
-| C — template + validator loop | Emergency | 40 | 97.5% | 67.5% | 72.5% | 2384 ms | 9880 ms (`em_narrative_12`, 2 calls) |
-| C — template + validator loop | Internal medicine | 20 | 100.0% | 100.0% | 100.0% | 1614 ms | 1939 ms (`im_14`, 1 call) |
+| Arm | Department | Records | Required-field population | First-pass rate | Raw conformance | Conformant + grounded | Median latency | Observed maximum |
+|---|---|---:|---:|---:|---:|---:|---:|---|
+| A — prompt only | Emergency | 40 | 100.0% | 90.0% | 90.0% | 67.5% | 1816 ms | 5669 ms (`em_11`, 1 call) |
+| A — prompt only | Internal medicine | 20 | 100.0% | 100.0% | 100.0% | 100.0% | 1584 ms | 2187 ms (`im_01`, 1 call) |
+| B — template constrained | Emergency | 40 | 97.5% | 65.0% | 65.0% | 65.0% | 3957 ms | 5798 ms (`em_narrative_01`, 1 call) |
+| B — template constrained | Internal medicine | 20 | 100.0% | 100.0% | 100.0% | 100.0% | 1552 ms | 2345 ms (`im_02`, 1 call) |
+| C — template + validator loop | Emergency | 40 | 97.5% | 67.5% | 72.5% | 70.0% | 2384 ms | 9880 ms (`em_narrative_12`, 2 calls) |
+| C — template + validator loop | Internal medicine | 20 | 100.0% | 100.0% | 100.0% | 100.0% | 1614 ms | 1939 ms (`im_14`, 1 call) |
 
 ## First-attempt failures by rule
 

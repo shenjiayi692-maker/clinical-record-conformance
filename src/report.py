@@ -15,23 +15,6 @@ ARM_NAMES = {
     "B": "B — template constrained",
     "C": "C — template + validator loop",
 }
-RULE_TYPE_NAMES = {
-    "required": "Required",
-    "max_length": "Maximum length",
-    "min_length": "Minimum length",
-    "must_match": "Required pattern",
-    "must_not_match": "Forbidden pattern",
-    "numeric_fields": "Numeric fields",
-    "section_order": "Section order",
-    "timestamp_format": "Timestamp format",
-    "parse": "Parse/structure",
-    "unknown": "Unknown",
-}
-FAILURE_CLASS_NAMES = {
-    "required": "Required information",
-    "format_terminology_order": "Format / terminology / order",
-    "parse_structure": "Parse / structure",
-}
 ROOT_CAUSE_NAMES = {
     "source_information_absent": "Source information absent",
     "model_or_format_repairable": "Model extraction or formatting",
@@ -52,11 +35,9 @@ def _max_latency(item: dict[str, Any]) -> str:
     return f"{item['max_latency_ms']:.0f} ms (`{record_id}`, {calls} call{'s' if calls != 1 else ''})"
 
 
-def _recovery_rows(lines: list[str], title: str, values: dict[str, dict[str, Any]], names: dict[str, str]) -> None:
+def _recovery_rows(lines: list[str], values: dict[str, dict[str, Any]], names: dict[str, str]) -> None:
     lines.extend(
         [
-            f"### {title}",
-            "",
             "| Failure group | Initial instances | Recovered | Remaining | Recovery rate |",
             "|---|---:|---:|---:|---:|",
         ]
@@ -78,25 +59,45 @@ def render_report(metrics: dict[str, Any]) -> str:
         "",
         f"Source log: `{metrics['source_log']}`",
         "",
-        "## Three-arm result",
+        "## Headline: conformance without invention",
         "",
-        "| Arm | Records | Source-grounded records | Field completeness | Pass rate after arm budget | Median record latency | Observed maximum | Unsupported fills | Total estimated cost |",
-        "|---|---:|---:|---:|---:|---:|---|---:|---:|",
     ]
+    if "A" in metrics["overall"] and "C" in metrics["overall"]:
+        arm_a = metrics["overall"]["A"]
+        arm_c = metrics["overall"]["C"]
+        a_grounding = arm_a["grounding"]
+        c_grounding = arm_c["grounding"]
+        highest_raw = arm_a["pass_rate_after_budget"] == max(
+            item["pass_rate_after_budget"] for item in metrics["overall"].values()
+        )
+        repairable = arm_c.get("recovery_by_root_cause", {}).get("model_or_format_repairable", {})
+        absent = arm_c.get("recovery_by_root_cause", {}).get("source_information_absent", {})
+        lines.extend(
+            [
+                f"Prompt-only Arm A achieved {'the highest ' if highest_raw else ''}raw conformance at **{_pct(arm_a['pass_rate_after_budget'])}**, while populating **{a_grounding['unsupported_fills']} of {a_grounding['omitted_field_opportunities']}** fields absent from the source. Arm C's lower raw conformance of **{_pct(arm_c['pass_rate_after_budget'])}** was often the safer behavior: it left **{c_grounding['left_unpopulated']}** controlled omissions unpopulated and surfaced **{c_grounding['surfaced_as_violations']}** as violations. Retries recovered **{_pct(repairable.get('recovery_rate'))}** of model extraction or formatting failures and **{_pct(absent.get('recovery_rate'))}** of source-information absences, so the validator should route failures rather than blindly retry them.",
+                "",
+            ]
+        )
+    lines.extend(
+        [
+        "| Arm | Records | **Conformant and grounded** | Raw conformance | Source-grounded records | Required-field population | Unsupported fills | Total estimated cost |",
+        "|---|---:|---:|---:|---:|---:|---:|---:|",
+        ]
+    )
     for arm in metrics["arms"]:
         item = metrics["overall"][arm]
         grounding = item["grounding"]
         lines.append(
-            f"| {ARM_NAMES.get(arm, arm)} | {item['records']} | {_pct(grounding['source_grounded_record_rate'])} | "
-            f"{_pct(item['field_completeness'])} | {_pct(item['pass_rate_after_budget'])} | "
-            f"{item['median_latency_ms']:.0f} ms | {_max_latency(item)} | {grounding['unsupported_fills']} | "
+            f"| {ARM_NAMES.get(arm, arm)} | {item['records']} | **{_pct(item['conformant_and_grounded_rate'])}** | "
+            f"{_pct(item['pass_rate_after_budget'])} | {_pct(grounding['source_grounded_record_rate'])} | "
+            f"{_pct(item['required_field_population_rate'])} | {grounding['unsupported_fills']} | "
             f"{_money(item['total_cost_usd'])} |"
         )
 
     lines.extend(
         [
             "",
-            "Field completeness is measured on final outputs and is not a grounding metric. Latency is end-to-end per record; Arm C includes all validator retries. The observed maximum identifies the record and API-call count so a single API tail is not presented as a population percentile.",
+            "**Conformant and grounded** means that the final record passed every rule and did not populate any manifest-controlled omission. This is stricter than raw conformance, but it is not a general factuality score: grounding is measured only for the benchmark's deliberately omitted fields. **Required-field population** replaces the misleading term “field completeness”; it measures whether required sections contain text, not whether that text is supported.",
             "",
             "## Ground-truth omission check",
             "",
@@ -123,6 +124,52 @@ def render_report(metrics: dict[str, Any]) -> str:
             ]
         )
 
+    if "A" in metrics["overall"] and "C" in metrics["overall"]:
+        cost_a = metrics["overall"]["A"]["total_cost_usd"]
+        cost_c = metrics["overall"]["C"]["total_cost_usd"]
+        if cost_a:
+            cost_multiple = cost_c / cost_a
+            cost_sentence = f"The full Arm C pipeline cost **{cost_multiple:.1f}×** as much as prompt-only Arm A in this run"
+            cost_interpretation = (
+                f"The {cost_multiple:.1f}× comparison is the observed price of the whole constrained pipeline, "
+                "not a causal estimate for grounding alone"
+            )
+            if "B" in metrics["overall"]:
+                cost_b = metrics["overall"]["B"]["total_cost_usd"]
+                if cost_b:
+                    cost_sentence += f", while C cost **{(cost_c / cost_b - 1) * 100:.1f}%** more than template-only Arm B"
+                    cost_interpretation += "; most of the gap already appears in structured generation"
+            retry_distribution = metrics["overall"]["C"].get("retry_distribution") or {}
+            retried_records = sum(
+                count
+                for attempts, count in retry_distribution.items()
+                if int(attempts) > 1
+            )
+            retry_label = f"{retried_records} Arm C record{'s' if retried_records != 1 else ''} made more than one API call"
+            lines.extend(
+                [
+                    "",
+                    "## Operational cost and latency",
+                    "",
+                    cost_sentence + f". {cost_interpretation}, and only {retry_label}.",
+                    "",
+                    "| Arm | Median record latency | Observed maximum |",
+                    "|---|---:|---|",
+                ]
+            )
+            for arm in metrics["arms"]:
+                item = metrics["overall"][arm]
+                lines.append(
+                    f"| {ARM_NAMES.get(arm, arm)} | {item['median_latency_ms']:.0f} ms | {_max_latency(item)} |"
+                )
+            if "B" in metrics["overall"] and metrics["overall"]["C"]["median_latency_ms"] < metrics["overall"]["B"]["median_latency_ms"]:
+                lines.extend(
+                    [
+                        "",
+                        f"Arm C's median happens to be lower than Arm B's, despite including retries. With {metrics['overall']['C']['records']} records and only {retried_records} retried records, that ordering is within run-to-run API latency noise and should not be read as free retries; retry overhead is visible in the extra calls and cost.",
+                    ]
+                )
+
     emergency_styles = metrics.get("by_arm_department_and_input_style", {})
     paired = metrics.get("emergency_paired_design", {})
     if paired.get("paired_cases"):
@@ -133,8 +180,8 @@ def render_report(metrics: dict[str, Any]) -> str:
                 "",
                 f"The same {paired['paired_cases']} synthetic emergency cases were rendered twice from identical source-fact fingerprints. The emergency schema and generation settings stayed fixed; only dictation shape changed.",
                 "",
-                "| Arm | Narrative conformance | Fragmented conformance | Fragmented minus narrative | Narrative source-grounded | Fragmented source-grounded |",
-                "|---|---:|---:|---:|---:|---:|",
+                "| Arm | Narrative raw conformance | Fragmented raw conformance | Narrative conformant + grounded | Fragmented conformant + grounded |",
+                "|---|---:|---:|---:|---:|",
             ]
         )
         for arm in metrics["arms"]:
@@ -143,17 +190,18 @@ def render_report(metrics: dict[str, Any]) -> str:
             fragmented = styles.get("fragmented")
             if not narrative or not fragmented:
                 continue
-            delta = fragmented["pass_rate_after_budget"] - narrative["pass_rate_after_budget"]
             lines.append(
                 f"| {ARM_NAMES.get(arm, arm)} | {_pct(narrative['pass_rate_after_budget'])} | "
-                f"{_pct(fragmented['pass_rate_after_budget'])} | {delta * 100:+.1f} pp | "
-                f"{_pct(narrative['grounding']['source_grounded_record_rate'])} | "
-                f"{_pct(fragmented['grounding']['source_grounded_record_rate'])} |"
+                f"{_pct(fragmented['pass_rate_after_budget'])} | "
+                f"{_pct(narrative['conformant_and_grounded_rate'])} | "
+                f"{_pct(fragmented['conformant_and_grounded_rate'])} |"
             )
         lines.extend(
             [
                 "",
-                "Holding the record standard constant, this table isolates the effect of narrative versus fragmented dictation instead of conflating input shape with department schema size.",
+                "This is a null result for the input-shape hypothesis. B and C were nominally higher on fragmented raw conformance, not lower; for C the 75% versus 70% difference is one record out of 20. That record, `em_15`, passed only because its fragmented output populated an absent visit time, while `em_narrative_15` honestly left it blank. The joint metric is therefore 70% in both C conditions.",
+                "",
+                "The synthetic fragmentation transformation reorders and interrupts facts but deliberately preserves them. It tests disorder without information loss, not omitted speech or ASR deletion. Within this benchmark, source omission is the mechanism the controlled cases clearly expose; word-order disruption by itself does not show a consistent effect.",
             ]
         )
         complete_pairs = paired.get("complete_source_paired_cases", 0)
@@ -164,8 +212,8 @@ def render_report(metrics: dict[str, Any]) -> str:
                     "",
                     f"The following sensitivity check excludes the six emergency cases with intentional source omissions, leaving {complete_pairs} complete-source pairs:",
                     "",
-                    "| Arm | Complete-source narrative | Complete-source fragmented | Fragmented minus narrative |",
-                    "|---|---:|---:|---:|",
+                    "| Arm | Complete-source narrative | Complete-source fragmented |",
+                    "|---|---:|---:|",
                 ]
             )
             for arm in metrics["arms"]:
@@ -173,10 +221,9 @@ def render_report(metrics: dict[str, Any]) -> str:
                 fragmented = complete_styles.get(arm, {}).get("fragmented")
                 if not narrative or not fragmented:
                     continue
-                delta = fragmented["pass_rate_after_budget"] - narrative["pass_rate_after_budget"]
                 lines.append(
                     f"| {ARM_NAMES.get(arm, arm)} | {_pct(narrative['pass_rate_after_budget'])} | "
-                    f"{_pct(fragmented['pass_rate_after_budget'])} | {delta * 100:+.1f} pp |"
+                    f"{_pct(fragmented['pass_rate_after_budget'])} |"
                 )
 
     pairing = metrics.get("bc_first_attempt_pairing", {})
@@ -193,12 +240,12 @@ def render_report(metrics: dict[str, Any]) -> str:
     arm_c = metrics.get("overall", {}).get("C")
     if arm_c:
         lines.extend(["", "## Arm C failure diagnosis", ""])
-        _recovery_rows(lines, "By operational failure class", arm_c["recovery_by_failure_class"], FAILURE_CLASS_NAMES)
-        _recovery_rows(lines, "By rule type", arm_c["recovery_by_rule_type"], RULE_TYPE_NAMES)
-        _recovery_rows(lines, "By source-aware root cause", arm_c["recovery_by_root_cause"], ROOT_CAUSE_NAMES)
+        _recovery_rows(lines, arm_c["recovery_by_root_cause"], ROOT_CAUSE_NAMES)
         lines.extend(
             [
-                "A rule's syntax does not by itself determine recoverability. For example, a `numeric_fields` failure caused by a source dictation that omits `SpO2` is a source-information absence, not a broken feedback loop. The appropriate action is to surface the gap for human completion, not regenerate until a value appears.",
+                "Retries repaired every observed model extraction or formatting failure and none of the source-information absences. The validator's role is therefore routing: repairable model failures go back to the model, while missing source facts go to a human.",
+                "",
+                "The earlier suspicion that `EM-FMT-402` exposed a broken feedback path was incorrect. Its source dictation omitted `SpO2`; the source-aware diagnosis correctly treats that numeric-rule failure as missing information and sends it to human review rather than retrying until the model invents a value.",
                 "",
             ]
         )
@@ -207,8 +254,8 @@ def render_report(metrics: dict[str, Any]) -> str:
         [
             "## Department breakdown",
             "",
-            "| Arm | Department | Records | Field completeness | First-pass rate | Pass rate after arm budget | Median latency | Observed maximum |",
-            "|---|---|---:|---:|---:|---:|---:|---|",
+            "| Arm | Department | Records | Required-field population | First-pass rate | Raw conformance | Conformant + grounded | Median latency | Observed maximum |",
+            "|---|---|---:|---:|---:|---:|---:|---:|---|",
         ]
     )
     for arm in metrics["arms"]:
@@ -218,8 +265,9 @@ def render_report(metrics: dict[str, Any]) -> str:
                 continue
             lines.append(
                 f"| {ARM_NAMES.get(arm, arm)} | {DEPARTMENT_NAMES.get(department, department)} | {item['records']} | "
-                f"{_pct(item['field_completeness'])} | {_pct(item['first_pass_rate'])} | "
-                f"{_pct(item['pass_rate_after_budget'])} | {item['median_latency_ms']:.0f} ms | {_max_latency(item)} |"
+                f"{_pct(item['required_field_population_rate'])} | {_pct(item['first_pass_rate'])} | "
+                f"{_pct(item['pass_rate_after_budget'])} | {_pct(item['conformant_and_grounded_rate'])} | "
+                f"{item['median_latency_ms']:.0f} ms | {_max_latency(item)} |"
             )
 
     lines.extend(["", "## First-attempt failures by rule", ""])
