@@ -99,6 +99,8 @@ Arm C's observed median (2163 ms) is lower than Arm B's (2395 ms), despite C mak
 
 ## Run it
 
+This is an offline batch experiment, not a service. There is no HTTP entrypoint and nothing to deploy: `src.generate` runs the three arms once and writes JSONL, and `src.evaluate` recomputes the metrics from a committed run. The numbers above come from `results/final_run.jsonl`, which is in the repository, so every table can be reproduced without an API key.
+
 Python 3.11 or newer is recommended.
 
 ```bash
