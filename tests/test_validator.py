@@ -12,13 +12,19 @@ EM_SCHEMA = load_schema(ROOT / "schemas" / "emergency.json")
 
 
 def single_rule_schema(rule_type, value=None, required=False):
-    rule = Rule(id="TEST-001", type=rule_type, value=value, message="test")
+    rule = Rule(
+        id="TEST-001",
+        type=rule_type,
+        value=value,
+        source="illustrative departmental template (synthetic)",
+        message="test",
+    )
     return RecordSchema(
         department="test",
         display_name="测试",
         sections=(Section(id="field", label="字段", required=required, order=1, rules=(rule,)),),
         global_rules=(),
-        todo_verify="TODO-VERIFY",
+        provenance={"test": True},
     )
 
 
@@ -134,6 +140,23 @@ def test_closed_set_disposition_rejects_out_of_vocabulary_value(value):
     assert "EM-FMT-802" in validate_record(valid, EM_SCHEMA)
 
 
+def test_free_text_parser_removes_sentence_punctuation_from_closed_set_value():
+    text = "\n".join(
+        [
+            "就诊时间：2026-09-03 14:05。",
+            "主诉：胸痛30分钟。",
+            "现病史：30分钟前突发胸痛，持续不缓解，伴大汗及恶心。",
+            "过敏史：否认药物过敏史。",
+            "生命体征：T 36.6 P 96 R 22 BP 148/92 SpO2 96。",
+            "体格检查：神清，心律齐，双肺呼吸音清。",
+            "初步诊断：胸痛待查。",
+            "急诊处置：2026-09-03 14:12 完成心电监护。",
+            "去向：留观。",
+        ]
+    )
+    assert validate_record(text, EM_SCHEMA) == []
+
+
 @pytest.mark.parametrize(
     "timestamp",
     ["2026-02-30 10:00", "2026-09-03 4:05", "2026-09-03 14:05:00", "2026/09/03 14:05"],
@@ -143,7 +166,14 @@ def test_timestamp_requires_real_date_at_minute_resolution(timestamp):
     assert validate_record({"field": timestamp}, schema) == ["TEST-001"]
 
 
-def test_schema_files_have_todo_marker_and_unique_rules():
+def test_schema_files_separate_public_standard_from_synthetic_template():
     for schema in (IM_SCHEMA, EM_SCHEMA):
-        assert "TODO-VERIFY" in schema.todo_verify
+        assert schema.provenance["national_standard"]["document_number"] == "卫医政发〔2010〕11号"
+        assert schema.provenance["national_standard"]["official_url"].startswith("https://www.nhc.gov.cn/")
+        assert schema.provenance["departmental_template"]["source"] == "illustrative departmental template (synthetic)"
         assert len(schema.rule_by_id) == sum(len(section.rules) for section in schema.sections) + len(schema.global_rules)
+        assert all(
+            rule.source.startswith("《病历书写基本规范》第")
+            or rule.source == "illustrative departmental template (synthetic)"
+            for rule in schema.rule_by_id.values()
+        )

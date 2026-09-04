@@ -71,7 +71,8 @@ def parse_record(text: str, schema: RecordSchema) -> ParsedRecord:
             chunks[current_id].append(line)
 
     for section_id, lines in chunks.items():
-        sections[section_id] = "\n".join(lines).strip()
+        # Sentence punctuation belongs to the free-text container, not a closed-set field value.
+        sections[section_id] = "\n".join(lines).strip().rstrip("。；;")
     if not sections:
         parse_failed = True
     return ParsedRecord(sections=sections, order=tuple(order), parse_failed=parse_failed)
@@ -107,7 +108,7 @@ def _normalize_mapping(record: Mapping[str, object], schema: RecordSchema) -> Pa
     return ParsedRecord(sections=sections, order=tuple(order), parse_failed=parse_failed)
 
 
-def _has_numeric_field(content: str, key: str) -> bool:
+def has_numeric_field(content: str, key: str) -> bool:
     pattern = rf"(?<![A-Za-z0-9]){re.escape(key)}\s*(?:[:：=]?\s*)-?\d+(?:\.\d+)?"
     return re.search(pattern, content, flags=re.IGNORECASE) is not None
 
@@ -134,7 +135,7 @@ def _violates(rule: Rule, content: str) -> bool:
     if rule.type == "must_not_match":
         return re.search(rule.value, content) is not None
     if rule.type == "numeric_fields":
-        return any(not _has_numeric_field(content, key) for key in rule.value)
+        return any(not has_numeric_field(content, key) for key in rule.value)
     if rule.type == "timestamp_format":
         return not _timestamp_is_valid(content)
     raise ValueError(f"unsupported section rule: {rule.type}")

@@ -17,12 +17,20 @@ from dotenv import load_dotenv
 from openai import OpenAI
 
 from src.schema import RecordSchema, load_schema
-from src.validator import PARSE_FAILURE_ID, ParsedRecord, field_completeness, parse_record, render_record, validate_record
+from src.validator import (
+    PARSE_FAILURE_ID,
+    ParsedRecord,
+    field_completeness,
+    has_numeric_field,
+    parse_record,
+    render_record,
+    validate_record,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_DIR = ROOT / "schemas"
-DICTATION_DIR = ROOT / "data" / "dictations"
+MANIFEST_PATH = ROOT / "data" / "manifest.json"
 RESULTS_DIR = ROOT / "results"
 DEFAULT_MODEL = "gpt-4o-2024-08-06"
 DEFAULT_SEED = 7
@@ -47,6 +55,18 @@ class RunConfig:
     temperature: float
     input_cost_per_million: float
     output_cost_per_million: float
+
+
+@dataclass(frozen=True)
+class SourceRecord:
+    record_id: str
+    case_id: str
+    department: str
+    input_style: str
+    schema: RecordSchema
+    dictation: str
+    omitted_required_fields: tuple[str, ...]
+    omitted_field_rule_ids: dict[str, str]
 
 
 def _rule_description(schema: RecordSchema) -> str:
@@ -177,6 +197,30 @@ def _feedback_messages(violations: list[str], schema: RecordSchema) -> list[str]
     return messages
 
 
+def _partition_retry_rules(
+    violations: list[str],
+    schema: RecordSchema,
+    dictation: str,
+) -> tuple[list[str], list[str]]:
+    """Separate model-repairable rules from gaps that require human input."""
+    retryable: list[str] = []
+    human_review: list[str] = []
+    for rule_id in violations:
+        if rule_id == PARSE_FAILURE_ID:
+            retryable.append(rule_id)
+            continue
+        rule = schema.rule_by_id[rule_id]
+        if rule.type == "required":
+            human_review.append(rule_id)
+        elif rule.type == "numeric_fields" and any(
+            not has_numeric_field(dictation, field_name) for field_name in rule.value
+        ):
+            human_review.append(rule_id)
+        else:
+            retryable.append(rule_id)
+    return retryable, human_review
+
+
 def _cost_usd(result: ModelResult, config: RunConfig) -> float:
     return round(
         result.input_tokens * config.input_cost_per_million / 1_000_000
@@ -200,6 +244,10 @@ def run_record(
     log_handle,
     start_attempt: int = 1,
     retry_messages: list[str] | None = None,
+    case_id: str | None = None,
+    input_style: str = "unknown",
+    omitted_required_fields: tuple[str, ...] = (),
+    omitted_field_rule_ids: dict[str, str] | None = None,
 ) -> None:
     max_attempts = 3 if arm == "C" else 1
     feedback = list(retry_messages or [])
@@ -218,15 +266,24 @@ def run_record(
             structured_record, _, violations = _parse_structured(result.text, schema)
             rendered = render_record(structured_record, schema) if structured_record else ""
             completeness = field_completeness(structured_record, schema) if structured_record else 0.0
+        retryable_rule_ids, human_review_rule_ids = _partition_retry_rules(violations, schema, dictation)
 
         _log_attempt(
             log_handle,
             {
                 "record_id": record_id,
+                "case_id": case_id or record_id,
                 "arm": arm,
                 "department": schema.department,
+                "input_style": input_style,
                 "attempt": attempt,
                 "violated_rule_ids": violations,
+                "retryable_rule_ids": retryable_rule_ids,
+                "human_review_rule_ids": human_review_rule_ids,
+                "feedback_messages": list(feedback),
+                "omitted_required_fields": list(omitted_required_fields),
+                "omitted_field_rule_ids": dict(omitted_field_rule_ids or {}),
+                "structured_record": structured_record,
                 "field_completeness": round(completeness, 6),
                 "latency_ms": result.latency_ms,
                 "input_tokens": result.input_tokens,
@@ -244,9 +301,9 @@ def run_record(
                 "rendered_record": rendered,
             },
         )
-        if not violations or arm != "C":
+        if not violations or arm != "C" or not retryable_rule_ids:
             return
-        feedback = _feedback_messages(violations, schema)
+        feedback = _feedback_messages(retryable_rule_ids, schema)
 
 
 def _load_resume_rows(path: Path, config: RunConfig) -> dict[tuple[str, str], list[dict[str, Any]]]:
@@ -289,26 +346,74 @@ def _resume_point(
 ) -> tuple[bool, int, list[str] | None]:
     if not prior:
         return False, 1, None
-    if arm != "C" or not prior[-1]["violated_rule_ids"] or len(prior) == 3:
+    retryable = prior[-1].get("retryable_rule_ids", prior[-1]["violated_rule_ids"])
+    if arm != "C" or not prior[-1]["violated_rule_ids"] or not retryable or len(prior) == 3:
         return True, len(prior) + 1, None
-    return False, len(prior) + 1, _feedback_messages(prior[-1]["violated_rule_ids"], schema)
+    return False, len(prior) + 1, _feedback_messages(retryable, schema)
 
 
-def discover_records(departments: set[str], limit: int | None = None) -> list[tuple[str, RecordSchema, str]]:
+def discover_records(
+    departments: set[str],
+    limit: int | None = None,
+    input_styles: set[str] | None = None,
+) -> list[SourceRecord]:
     schemas = {
         "internal_medicine": load_schema(SCHEMA_DIR / "internal_medicine.json"),
         "emergency": load_schema(SCHEMA_DIR / "emergency.json"),
     }
-    prefixes = {"internal_medicine": "im_", "emergency": "em_"}
-    records: list[tuple[str, RecordSchema, str]] = []
-    for department in ("internal_medicine", "emergency"):
-        if department not in departments:
+    with MANIFEST_PATH.open(encoding="utf-8") as handle:
+        manifest = json.load(handle)
+    raw_records = manifest.get("records") if isinstance(manifest, dict) else None
+    if not isinstance(raw_records, list):
+        raise ValueError("data/manifest.json must contain a records list")
+
+    records: list[SourceRecord] = []
+    per_group_count: dict[tuple[str, str], int] = defaultdict(int)
+    seen_ids: set[str] = set()
+    for index, raw in enumerate(raw_records):
+        if not isinstance(raw, dict):
+            raise ValueError(f"manifest record {index} must be an object")
+        record_id = raw.get("record_id")
+        case_id = raw.get("case_id")
+        department = raw.get("department")
+        input_style = raw.get("input_style")
+        relative_path = raw.get("dictation_path")
+        omitted = raw.get("omitted_required_fields")
+        omission_rules = raw.get("omitted_field_rule_ids")
+        if not all(isinstance(value, str) and value for value in (record_id, case_id, department, input_style, relative_path)):
+            raise ValueError(f"manifest record {index} has invalid identity fields")
+        if record_id in seen_ids:
+            raise ValueError(f"duplicate manifest record_id: {record_id}")
+        seen_ids.add(record_id)
+        if department not in schemas:
+            raise ValueError(f"manifest record {record_id} has unknown department {department}")
+        if not isinstance(omitted, list) or not all(isinstance(field, str) and field for field in omitted):
+            raise ValueError(f"manifest record {record_id} has invalid omitted_required_fields")
+        if not isinstance(omission_rules, dict) or set(omission_rules) != set(omitted):
+            raise ValueError(f"manifest record {record_id} must map every omitted field to a rule ID")
+        if not all(isinstance(rule_id, str) and rule_id for rule_id in omission_rules.values()):
+            raise ValueError(f"manifest record {record_id} has an invalid omission rule ID")
+        if department not in departments or (input_styles is not None and input_style not in input_styles):
             continue
-        paths = sorted(DICTATION_DIR.glob(f"{prefixes[department]}*.txt"))
-        if limit is not None:
-            paths = paths[:limit]
-        schema = schemas[department]
-        records.extend((path.stem, schema, path.read_text(encoding="utf-8").strip()) for path in paths)
+        group = (department, input_style)
+        if limit is not None and per_group_count[group] >= limit:
+            continue
+        per_group_count[group] += 1
+        path = (ROOT / relative_path).resolve()
+        if not path.is_relative_to(ROOT.resolve()) or not path.is_file():
+            raise ValueError(f"manifest record {record_id} has invalid dictation_path")
+        records.append(
+            SourceRecord(
+                record_id=record_id,
+                case_id=case_id,
+                department=department,
+                input_style=input_style,
+                schema=schemas[department],
+                dictation=path.read_text(encoding="utf-8").strip(),
+                omitted_required_fields=tuple(omitted),
+                omitted_field_rule_ids=dict(omission_rules),
+            )
+        )
     return records
 
 
@@ -317,13 +422,14 @@ def run_experiment(
     config: RunConfig,
     arms: tuple[str, ...] = ("A", "B", "C"),
     departments: set[str] | None = None,
+    input_styles: set[str] | None = None,
     limit: int | None = None,
     log_path: Path | None = None,
     write_report: bool = True,
     resume: bool = False,
 ) -> Path:
     departments = departments or {"internal_medicine", "emergency"}
-    records = discover_records(departments, limit)
+    records = discover_records(departments, limit, input_styles)
     if not records:
         raise RuntimeError("no dictation records found")
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
@@ -335,7 +441,7 @@ def run_experiment(
     if not resume and log_path.exists():
         raise FileExistsError(f"refusing to overwrite existing log: {log_path}")
     existing = _load_resume_rows(log_path, config) if resume else {}
-    expected_keys = {(record_id, arm) for record_id, _, _ in records for arm in arms}
+    expected_keys = {(record.record_id, arm) for record in records for arm in arms}
     unexpected = set(existing) - expected_keys
     if unexpected:
         raise ValueError(f"cannot resume: log contains records outside this run: {sorted(unexpected)}")
@@ -344,23 +450,29 @@ def run_experiment(
     completed = 0
     mode = "a" if resume else "x"
     with log_path.open(mode, encoding="utf-8") as handle:
-        for record_id, schema, dictation in records:
+        for record in records:
             for arm in arms:
                 completed += 1
-                done, start_attempt, retry_messages = _resume_point(existing.get((record_id, arm), []), arm, schema)
+                done, start_attempt, retry_messages = _resume_point(
+                    existing.get((record.record_id, arm), []), arm, record.schema
+                )
                 if done:
                     continue
-                print(f"[{completed}/{total}] {record_id} arm {arm}", flush=True)
+                print(f"[{completed}/{total}] {record.record_id} arm {arm}", flush=True)
                 run_record(
                     client,
                     config,
-                    record_id,
+                    record.record_id,
                     arm,
-                    schema,
-                    dictation,
+                    record.schema,
+                    record.dictation,
                     handle,
                     start_attempt=start_attempt,
                     retry_messages=retry_messages,
+                    case_id=record.case_id,
+                    input_style=record.input_style,
+                    omitted_required_fields=record.omitted_required_fields,
+                    omitted_field_rule_ids=record.omitted_field_rule_ids,
                 )
 
     if write_report:
@@ -387,7 +499,8 @@ def parse_args() -> argparse.Namespace:
         choices=("internal_medicine", "emergency"),
         default=("internal_medicine", "emergency"),
     )
-    parser.add_argument("--limit", type=int, help="records per department; useful for a smoke run")
+    parser.add_argument("--input-styles", nargs="+", choices=("narrative", "fragmented"))
+    parser.add_argument("--limit", type=int, help="records per department and input style; useful for a smoke run")
     parser.add_argument("--resume-log", type=Path, help="append to a compatible partial JSONL run")
     parser.add_argument("--no-report", action="store_true", help="skip report and final-run copy")
     return parser.parse_args()
@@ -410,6 +523,7 @@ def main() -> None:
         config,
         arms=tuple(args.arms),
         departments=set(args.departments),
+        input_styles=set(args.input_styles) if args.input_styles else None,
         limit=args.limit,
         log_path=args.resume_log,
         write_report=not args.no_report,

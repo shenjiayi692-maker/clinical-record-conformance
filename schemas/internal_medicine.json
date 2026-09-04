@@ -1,5 +1,18 @@
 {
-  "_todo_verify": "TODO-VERIFY: replace with authoritative field definitions before publication",
+  "provenance": {
+    "national_standard": {
+      "title": "《病历书写基本规范》",
+      "document_number": "卫医政发〔2010〕11号",
+      "issued_date": "2010-01-22",
+      "effective_date": "2010-03-01",
+      "official_url": "https://www.nhc.gov.cn/yzygj/c100068/201002/766b58f0dd9242d3b62276e5c88d27dc.shtml",
+      "scope": "Public national baseline; rule-level clause mappings are identified by source."
+    },
+    "departmental_template": {
+      "source": "illustrative departmental template (synthetic)",
+      "scope": "The section selection, labels, order, exact length thresholds, and implementation encodings are fictional evaluation choices and do not reproduce a hospital template."
+    }
+  },
   "department": "internal_medicine",
   "display_name": "内科",
   "sections": [
@@ -9,10 +22,10 @@
       "required": true,
       "order": 1,
       "rules": [
-        {"id": "IM-REQ-001", "type": "required", "message": "主诉不得为空"},
-        {"id": "IM-LEN-002", "type": "max_length", "value": 20, "message": "主诉应在20字以内"},
-        {"id": "IM-FMT-003", "type": "must_match", "value": "(天|日|周|月|年|小时)", "message": "主诉须包含症状持续时间"},
-        {"id": "IM-TERM-004", "type": "must_not_match", "value": "(患者说|病人自述说|据说)", "message": "主诉应使用规范医学表述，不得转述口语"}
+        {"id": "IM-REQ-001", "type": "required", "source": "《病历书写基本规范》第十八条第（二）项", "message": "主诉不得为空"},
+        {"id": "IM-LEN-002", "type": "max_length", "value": 20, "source": "illustrative departmental template (synthetic)", "message": "主诉应在20字以内"},
+        {"id": "IM-FMT-003", "type": "must_match", "value": "(天|日|周|月|年|小时)", "source": "《病历书写基本规范》第十八条第（二）项", "message": "主诉须包含主要症状（或体征）的持续时间"},
+        {"id": "IM-TERM-004", "type": "must_not_match", "value": "(患者说|病人自述说|据说)", "source": "illustrative departmental template (synthetic)", "message": "主诉应使用规范医学表述，不得转述口语"}
       ]
     },
     {
@@ -21,8 +34,8 @@
       "required": true,
       "order": 2,
       "rules": [
-        {"id": "IM-REQ-101", "type": "required", "message": "现病史不得为空"},
-        {"id": "IM-LEN-102", "type": "min_length", "value": 20, "message": "现病史应完整描述起病与症状演变"}
+        {"id": "IM-REQ-101", "type": "required", "source": "《病历书写基本规范》第十八条第（三）项", "message": "现病史不得为空"},
+        {"id": "IM-LEN-102", "type": "min_length", "value": 20, "source": "illustrative departmental template (synthetic)", "message": "现病史应完整描述起病与症状演变"}
       ]
     },
     {
@@ -31,7 +44,7 @@
       "required": true,
       "order": 3,
       "rules": [
-        {"id": "IM-REQ-201", "type": "required", "message": "既往史不得为空"}
+        {"id": "IM-REQ-201", "type": "required", "source": "《病历书写基本规范》第十八条第（四）项", "message": "既往史不得为空"}
       ]
     },
     {
@@ -40,7 +53,7 @@
       "required": true,
       "order": 4,
       "rules": [
-        {"id": "IM-REQ-301", "type": "required", "message": "过敏史不得为空"}
+        {"id": "IM-REQ-301", "type": "required", "source": "《病历书写基本规范》第十八条第（四）项", "message": "药物过敏史不得为空"}
       ]
     },
     {
@@ -49,8 +62,8 @@
       "required": true,
       "order": 5,
       "rules": [
-        {"id": "IM-REQ-401", "type": "required", "message": "体格检查不得为空"},
-        {"id": "IM-FMT-402", "type": "numeric_fields", "value": ["T", "P", "R", "BP"], "message": "体格检查必须逐项使用字面字段标签 T、P、R、BP 记录对应数值"}
+        {"id": "IM-REQ-401", "type": "required", "source": "《病历书写基本规范》第十八条第（六）项", "message": "体格检查不得为空"},
+        {"id": "IM-FMT-402", "type": "numeric_fields", "value": ["T", "P", "R", "BP"], "source": "《病历书写基本规范》第十八条第（六）项", "message": "体格检查应记录体温、脉搏、呼吸、血压；本示例分别编码为 T、P、R、BP 数值字段"}
       ]
     },
     {
@@ -66,7 +79,7 @@
       "required": true,
       "order": 7,
       "rules": [
-        {"id": "IM-REQ-501", "type": "required", "message": "初步诊断不得为空"}
+        {"id": "IM-REQ-501", "type": "required", "source": "《病历书写基本规范》第十八条第（九）项", "message": "初步诊断不得为空"}
       ]
     },
     {
@@ -75,11 +88,11 @@
       "required": true,
       "order": 8,
       "rules": [
-        {"id": "IM-REQ-601", "type": "required", "message": "处理意见不得为空"}
+        {"id": "IM-REQ-601", "type": "required", "source": "《病历书写基本规范》第十三条", "message": "治疗处理意见不得为空"}
       ]
     }
   ],
   "global_rules": [
-    {"id": "IM-ORD-900", "type": "section_order", "message": "章节顺序须符合规范"}
+    {"id": "IM-ORD-900", "type": "section_order", "source": "illustrative departmental template (synthetic)", "message": "章节顺序须符合示例科室模板"}
   ]
 }

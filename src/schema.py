@@ -19,12 +19,15 @@ RULE_TYPES = {
     "section_order",
     "timestamp_format",
 }
+SYNTHETIC_TEMPLATE_SOURCE = "illustrative departmental template (synthetic)"
+NATIONAL_STANDARD_PREFIX = "《病历书写基本规范》第"
 
 
 @dataclass(frozen=True)
 class Rule:
     id: str
     type: str
+    source: str
     message: str
     value: Any = None
 
@@ -44,7 +47,7 @@ class RecordSchema:
     display_name: str
     sections: tuple[Section, ...]
     global_rules: tuple[Rule, ...]
-    todo_verify: str
+    provenance: dict[str, Any]
 
     @property
     def section_by_id(self) -> dict[str, Section]:
@@ -73,7 +76,12 @@ def _require(mapping: dict[str, Any], key: str, expected_type: type, context: st
 def _load_rule(raw: dict[str, Any], context: str) -> Rule:
     rule_id = _require(raw, "id", str, context)
     rule_type = _require(raw, "type", str, context)
+    source = _require(raw, "source", str, context)
     message = _require(raw, "message", str, context)
+    if not source.strip():
+        raise ValueError(f"{context}.source must not be empty")
+    if source != SYNTHETIC_TEMPLATE_SOURCE and not source.startswith(NATIONAL_STANDARD_PREFIX):
+        raise ValueError(f"{context}.source must identify the public standard or synthetic template")
     if rule_type not in RULE_TYPES:
         raise ValueError(f"{context}.type has unsupported value {rule_type!r}")
     if rule_type in {"max_length", "min_length"}:
@@ -94,7 +102,7 @@ def _load_rule(raw: dict[str, Any], context: str) -> Rule:
             raise ValueError(f"{context}.value must be a non-empty list of field names")
     else:
         value = raw.get("value")
-    return Rule(id=rule_id, type=rule_type, message=message, value=value)
+    return Rule(id=rule_id, type=rule_type, source=source, message=message, value=value)
 
 
 def load_schema(path: str | Path) -> RecordSchema:
@@ -107,9 +115,14 @@ def load_schema(path: str | Path) -> RecordSchema:
 
     department = _require(raw, "department", str, "schema")
     display_name = _require(raw, "display_name", str, "schema")
-    todo_verify = _require(raw, "_todo_verify", str, "schema")
-    if "TODO-VERIFY" not in todo_verify:
-        raise ValueError("schema._todo_verify must contain TODO-VERIFY")
+    provenance = _require(raw, "provenance", dict, "schema")
+    national = _require(provenance, "national_standard", dict, "schema.provenance")
+    departmental = _require(provenance, "departmental_template", dict, "schema.provenance")
+    for key in ("title", "document_number", "official_url", "scope"):
+        _require(national, key, str, "schema.provenance.national_standard")
+    departmental_source = _require(departmental, "source", str, "schema.provenance.departmental_template")
+    if departmental_source != SYNTHETIC_TEMPLATE_SOURCE:
+        raise ValueError("schema departmental source must identify the template as synthetic")
 
     raw_sections = _require(raw, "sections", list, "schema")
     sections: list[Section] = []
@@ -162,5 +175,5 @@ def load_schema(path: str | Path) -> RecordSchema:
         display_name=display_name,
         sections=tuple(sections),
         global_rules=global_rules,
-        todo_verify=todo_verify,
+        provenance=provenance,
     )

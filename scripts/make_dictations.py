@@ -1,12 +1,29 @@
-"""Create the fixed, fully fictional 40-record evaluation corpus."""
+"""Create the fixed, fully fictional corpus and omission ground truth."""
 
 from __future__ import annotations
 
+import hashlib
+import json
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-OUTPUT = ROOT / "data" / "dictations"
+DATA_DIR = ROOT / "data"
+OUTPUT = DATA_DIR / "dictations"
+EMERGENCY_NARRATIVE_OUTPUT = OUTPUT / "emergency_narrative"
+MANIFEST_PATH = DATA_DIR / "manifest.json"
+
+EMERGENCY_SOURCE_FIELDS = {
+    "time": ("visit_time", "EM-REQ-001"),
+    "complaint": ("chief_complaint", "EM-REQ-101"),
+    "history": ("history_present_illness", "EM-REQ-201"),
+    "allergy": ("allergy_history", "EM-REQ-301"),
+    "v1": ("vital_signs", "EM-REQ-401"),
+    "exam": ("physical_exam", "EM-REQ-501"),
+    "diagnosis": ("initial_diagnosis", "EM-REQ-601"),
+    "treatment": ("emergency_treatment", "EM-REQ-701"),
+    "disposition": ("disposition", "EM-REQ-801"),
+}
 
 
 INTERNAL_CASES = [
@@ -86,13 +103,112 @@ def render_emergency(case: dict[str, str], index: int) -> str:
     return "\n".join(parts)
 
 
+def render_emergency_narrative(case: dict[str, str]) -> str:
+    """Render the same facts as the fragmented version in schema order."""
+    parts = ["急诊连续口述，以下均为本次虚构演示内容。"]
+    if "time" in case:
+        parts.append(f"患者于{case['time']}就诊。")
+    if "complaint" in case:
+        parts.append(f"主诉为{case['complaint']}。")
+    if "history" in case:
+        parts.append(f"现病史：{case['history']}。")
+    if "allergy" in case:
+        parts.append(f"过敏史：{case['allergy']}。")
+    if "v1" in case:
+        parts.append(f"初始生命体征：{case['v1']}。")
+    if "v2" in case:
+        parts.append(f"复测生命体征：{case['v2']}。")
+    if "exam" in case:
+        parts.append(f"体格检查：{case['exam']}。")
+    if "test" in case:
+        parts.append(f"辅助检查：{case['test']}。")
+    if "diagnosis" in case:
+        parts.append(f"初步诊断：{case['diagnosis']}。")
+    if "treatment" in case:
+        parts.append(f"急诊处置：{case['treatment']}。")
+    if "disposition" in case:
+        parts.append(f"患者去向：{case['disposition']}。")
+    return "".join(parts)
+
+
+def emergency_omissions(case: dict[str, str]) -> tuple[list[str], dict[str, str]]:
+    omitted: list[str] = []
+    rule_ids: dict[str, str] = {}
+    for source_key, (field, rule_id) in EMERGENCY_SOURCE_FIELDS.items():
+        if source_key not in case:
+            omitted.append(field)
+            rule_ids[field] = rule_id
+    if "v1" in case and "SpO2" not in case["v1"]:
+        omitted.append("vital_signs.SpO2")
+        rule_ids["vital_signs.SpO2"] = "EM-FMT-402"
+    return omitted, rule_ids
+
+
+def fact_fingerprint(case: object) -> str:
+    payload = json.dumps(case, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
 def main() -> None:
     OUTPUT.mkdir(parents=True, exist_ok=True)
+    EMERGENCY_NARRATIVE_OUTPUT.mkdir(parents=True, exist_ok=True)
+    manifest_records: list[dict[str, object]] = []
     for index, case in enumerate(INTERNAL_CASES, start=1):
-        (OUTPUT / f"im_{index:02d}.txt").write_text(render_internal(case) + "\n", encoding="utf-8")
+        record_id = f"im_{index:02d}"
+        path = OUTPUT / f"{record_id}.txt"
+        path.write_text(render_internal(case) + "\n", encoding="utf-8")
+        manifest_records.append(
+            {
+                "record_id": record_id,
+                "case_id": record_id,
+                "department": "internal_medicine",
+                "input_style": "narrative",
+                "dictation_path": str(path.relative_to(ROOT)),
+                "source_fact_sha256": fact_fingerprint(case),
+                "omitted_required_fields": [],
+                "omitted_field_rule_ids": {},
+            }
+        )
     for index, case in enumerate(EMERGENCY_CASES, start=1):
-        (OUTPUT / f"em_{index:02d}.txt").write_text(render_emergency(case, index) + "\n", encoding="utf-8")
-    print(f"Wrote {len(INTERNAL_CASES) + len(EMERGENCY_CASES)} fictional dictations to {OUTPUT}")
+        case_id = f"em_case_{index:02d}"
+        fragmented_id = f"em_{index:02d}"
+        narrative_id = f"em_narrative_{index:02d}"
+        fragmented_path = OUTPUT / f"{fragmented_id}.txt"
+        narrative_path = EMERGENCY_NARRATIVE_OUTPUT / f"{narrative_id}.txt"
+        fragmented_path.write_text(render_emergency(case, index) + "\n", encoding="utf-8")
+        narrative_path.write_text(render_emergency_narrative(case) + "\n", encoding="utf-8")
+        omissions, omission_rules = emergency_omissions(case)
+        common = {
+            "case_id": case_id,
+            "department": "emergency",
+            "source_fact_sha256": fact_fingerprint(case),
+            "omitted_required_fields": omissions,
+            "omitted_field_rule_ids": omission_rules,
+        }
+        manifest_records.extend(
+            [
+                {
+                    **common,
+                    "record_id": fragmented_id,
+                    "input_style": "fragmented",
+                    "dictation_path": str(fragmented_path.relative_to(ROOT)),
+                },
+                {
+                    **common,
+                    "record_id": narrative_id,
+                    "input_style": "narrative",
+                    "dictation_path": str(narrative_path.relative_to(ROOT)),
+                },
+            ]
+        )
+
+    manifest = {
+        "version": 1,
+        "description": "Ground truth for a fully synthetic corpus. Dot notation identifies an omitted required subfield.",
+        "records": manifest_records,
+    }
+    MANIFEST_PATH.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    print(f"Wrote {len(manifest_records)} fictional dictations and {MANIFEST_PATH}")
 
 
 if __name__ == "__main__":

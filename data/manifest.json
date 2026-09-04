@@ -1,0 +1,654 @@
+{
+  "version": 1,
+  "description": "Ground truth for a fully synthetic corpus. Dot notation identifies an omitted required subfield.",
+  "records": [
+    {
+      "record_id": "im_01",
+      "case_id": "im_01",
+      "department": "internal_medicine",
+      "input_style": "narrative",
+      "dictation_path": "data/dictations/im_01.txt",
+      "source_fact_sha256": "f4540f6112ba405d3a2c829c7209936265f8113bfe8610cc3df8afac03f08dc4",
+      "omitted_required_fields": [],
+      "omitted_field_rule_ids": {}
+    },
+    {
+      "record_id": "im_02",
+      "case_id": "im_02",
+      "department": "internal_medicine",
+      "input_style": "narrative",
+      "dictation_path": "data/dictations/im_02.txt",
+      "source_fact_sha256": "9880e9e05692ebfafd9293ff2cbaf234fdddddba7b3024af58d734a0aa6ef27f",
+      "omitted_required_fields": [],
+      "omitted_field_rule_ids": {}
+    },
+    {
+      "record_id": "im_03",
+      "case_id": "im_03",
+      "department": "internal_medicine",
+      "input_style": "narrative",
+      "dictation_path": "data/dictations/im_03.txt",
+      "source_fact_sha256": "2cab9b1222368611eb773c282992ec02d77fb62754b0378ecddba9b6099d6920",
+      "omitted_required_fields": [],
+      "omitted_field_rule_ids": {}
+    },
+    {
+      "record_id": "im_04",
+      "case_id": "im_04",
+      "department": "internal_medicine",
+      "input_style": "narrative",
+      "dictation_path": "data/dictations/im_04.txt",
+      "source_fact_sha256": "2d29da652467e12bac496ef895cb78dd304928f47e500c3ef10a895a8141a808",
+      "omitted_required_fields": [],
+      "omitted_field_rule_ids": {}
+    },
+    {
+      "record_id": "im_05",
+      "case_id": "im_05",
+      "department": "internal_medicine",
+      "input_style": "narrative",
+      "dictation_path": "data/dictations/im_05.txt",
+      "source_fact_sha256": "92238225c4c8ba10dd10466cf4ddcd502e96475813e3ce70434a4e4a0e7fa431",
+      "omitted_required_fields": [],
+      "omitted_field_rule_ids": {}
+    },
+    {
+      "record_id": "im_06",
+      "case_id": "im_06",
+      "department": "internal_medicine",
+      "input_style": "narrative",
+      "dictation_path": "data/dictations/im_06.txt",
+      "source_fact_sha256": "1916a41158d888092749201f6a968639d7bd95bf6376ea14805e5fa0c64f25d1",
+      "omitted_required_fields": [],
+      "omitted_field_rule_ids": {}
+    },
+    {
+      "record_id": "im_07",
+      "case_id": "im_07",
+      "department": "internal_medicine",
+      "input_style": "narrative",
+      "dictation_path": "data/dictations/im_07.txt",
+      "source_fact_sha256": "4136adb9f4ed791a5e1f53743d4593ff2be9c90873a567bf68a72a99b840c2bb",
+      "omitted_required_fields": [],
+      "omitted_field_rule_ids": {}
+    },
+    {
+      "record_id": "im_08",
+      "case_id": "im_08",
+      "department": "internal_medicine",
+      "input_style": "narrative",
+      "dictation_path": "data/dictations/im_08.txt",
+      "source_fact_sha256": "95e9426955e7f797f00ce8bd5ae935ea723a7f39636ae1164ac8d898741b2727",
+      "omitted_required_fields": [],
+      "omitted_field_rule_ids": {}
+    },
+    {
+      "record_id": "im_09",
+      "case_id": "im_09",
+      "department": "internal_medicine",
+      "input_style": "narrative",
+      "dictation_path": "data/dictations/im_09.txt",
+      "source_fact_sha256": "690a5a059c6028af38c0efc251c4a6ee76243d269bc9c378d963e0e276a216f5",
+      "omitted_required_fields": [],
+      "omitted_field_rule_ids": {}
+    },
+    {
+      "record_id": "im_10",
+      "case_id": "im_10",
+      "department": "internal_medicine",
+      "input_style": "narrative",
+      "dictation_path": "data/dictations/im_10.txt",
+      "source_fact_sha256": "c045922dcb9806f23938f77903fd53e0d59327c3011f414cda870a1e4b92849b",
+      "omitted_required_fields": [],
+      "omitted_field_rule_ids": {}
+    },
+    {
+      "record_id": "im_11",
+      "case_id": "im_11",
+      "department": "internal_medicine",
+      "input_style": "narrative",
+      "dictation_path": "data/dictations/im_11.txt",
+      "source_fact_sha256": "73ee866c918df9f44006dcd208302a2aef4bdc469d8d1bb31f543d278384bbef",
+      "omitted_required_fields": [],
+      "omitted_field_rule_ids": {}
+    },
+    {
+      "record_id": "im_12",
+      "case_id": "im_12",
+      "department": "internal_medicine",
+      "input_style": "narrative",
+      "dictation_path": "data/dictations/im_12.txt",
+      "source_fact_sha256": "0091f2c391721dee333d50b88fc4686965c2f8ac939c5901cca82b34cb50727a",
+      "omitted_required_fields": [],
+      "omitted_field_rule_ids": {}
+    },
+    {
+      "record_id": "im_13",
+      "case_id": "im_13",
+      "department": "internal_medicine",
+      "input_style": "narrative",
+      "dictation_path": "data/dictations/im_13.txt",
+      "source_fact_sha256": "6be898c076f92e8d8d5226c12896729eff79781b6f0e422b5edf6efe9f5fec82",
+      "omitted_required_fields": [],
+      "omitted_field_rule_ids": {}
+    },
+    {
+      "record_id": "im_14",
+      "case_id": "im_14",
+      "department": "internal_medicine",
+      "input_style": "narrative",
+      "dictation_path": "data/dictations/im_14.txt",
+      "source_fact_sha256": "d32bece08e73682682fa0a0274b539f7ce23bb3d6cc8b4ecd48da4b847287eaa",
+      "omitted_required_fields": [],
+      "omitted_field_rule_ids": {}
+    },
+    {
+      "record_id": "im_15",
+      "case_id": "im_15",
+      "department": "internal_medicine",
+      "input_style": "narrative",
+      "dictation_path": "data/dictations/im_15.txt",
+      "source_fact_sha256": "eae09141d4f6f12b3f3bb032f24d40ffc1fc25a7838f35a6df49f7bf5a8be5c0",
+      "omitted_required_fields": [],
+      "omitted_field_rule_ids": {}
+    },
+    {
+      "record_id": "im_16",
+      "case_id": "im_16",
+      "department": "internal_medicine",
+      "input_style": "narrative",
+      "dictation_path": "data/dictations/im_16.txt",
+      "source_fact_sha256": "d81181e456fabf5157f3957f746a3315280279714949a96f1bbcfd1ba11f116e",
+      "omitted_required_fields": [],
+      "omitted_field_rule_ids": {}
+    },
+    {
+      "record_id": "im_17",
+      "case_id": "im_17",
+      "department": "internal_medicine",
+      "input_style": "narrative",
+      "dictation_path": "data/dictations/im_17.txt",
+      "source_fact_sha256": "d654869c614996852496679c07624a8bde1ce161ae13850647b660296b98cf3d",
+      "omitted_required_fields": [],
+      "omitted_field_rule_ids": {}
+    },
+    {
+      "record_id": "im_18",
+      "case_id": "im_18",
+      "department": "internal_medicine",
+      "input_style": "narrative",
+      "dictation_path": "data/dictations/im_18.txt",
+      "source_fact_sha256": "51ad95bd0d4070670fcc2cfedbfdadbd95d74debbc1a19c8f4a25952b6bba238",
+      "omitted_required_fields": [],
+      "omitted_field_rule_ids": {}
+    },
+    {
+      "record_id": "im_19",
+      "case_id": "im_19",
+      "department": "internal_medicine",
+      "input_style": "narrative",
+      "dictation_path": "data/dictations/im_19.txt",
+      "source_fact_sha256": "8209c80504e83862596315a7cce57feb1e76028b0dc4bfe4eafde282fa2a1288",
+      "omitted_required_fields": [],
+      "omitted_field_rule_ids": {}
+    },
+    {
+      "record_id": "im_20",
+      "case_id": "im_20",
+      "department": "internal_medicine",
+      "input_style": "narrative",
+      "dictation_path": "data/dictations/im_20.txt",
+      "source_fact_sha256": "91d47bdc45998feea41ef02d6b40033194b7fd10f767d880004d3c58262ec353",
+      "omitted_required_fields": [],
+      "omitted_field_rule_ids": {}
+    },
+    {
+      "case_id": "em_case_01",
+      "department": "emergency",
+      "source_fact_sha256": "95b01cd437a145fdf31b6e20ede7e61be03c7df4c5d6aff725c2eab47c13ce44",
+      "omitted_required_fields": [],
+      "omitted_field_rule_ids": {},
+      "record_id": "em_01",
+      "input_style": "fragmented",
+      "dictation_path": "data/dictations/em_01.txt"
+    },
+    {
+      "case_id": "em_case_01",
+      "department": "emergency",
+      "source_fact_sha256": "95b01cd437a145fdf31b6e20ede7e61be03c7df4c5d6aff725c2eab47c13ce44",
+      "omitted_required_fields": [],
+      "omitted_field_rule_ids": {},
+      "record_id": "em_narrative_01",
+      "input_style": "narrative",
+      "dictation_path": "data/dictations/emergency_narrative/em_narrative_01.txt"
+    },
+    {
+      "case_id": "em_case_02",
+      "department": "emergency",
+      "source_fact_sha256": "de4c15d170dcdaf8634a4878e2dc7d5bfdd8b4543d97447a2cdfba45bf0c1e26",
+      "omitted_required_fields": [],
+      "omitted_field_rule_ids": {},
+      "record_id": "em_02",
+      "input_style": "fragmented",
+      "dictation_path": "data/dictations/em_02.txt"
+    },
+    {
+      "case_id": "em_case_02",
+      "department": "emergency",
+      "source_fact_sha256": "de4c15d170dcdaf8634a4878e2dc7d5bfdd8b4543d97447a2cdfba45bf0c1e26",
+      "omitted_required_fields": [],
+      "omitted_field_rule_ids": {},
+      "record_id": "em_narrative_02",
+      "input_style": "narrative",
+      "dictation_path": "data/dictations/emergency_narrative/em_narrative_02.txt"
+    },
+    {
+      "case_id": "em_case_03",
+      "department": "emergency",
+      "source_fact_sha256": "f4682cdca3e163918c0e36bd637369c0406bf3536d9e23837647ff6bf1426c4e",
+      "omitted_required_fields": [
+        "disposition"
+      ],
+      "omitted_field_rule_ids": {
+        "disposition": "EM-REQ-801"
+      },
+      "record_id": "em_03",
+      "input_style": "fragmented",
+      "dictation_path": "data/dictations/em_03.txt"
+    },
+    {
+      "case_id": "em_case_03",
+      "department": "emergency",
+      "source_fact_sha256": "f4682cdca3e163918c0e36bd637369c0406bf3536d9e23837647ff6bf1426c4e",
+      "omitted_required_fields": [
+        "disposition"
+      ],
+      "omitted_field_rule_ids": {
+        "disposition": "EM-REQ-801"
+      },
+      "record_id": "em_narrative_03",
+      "input_style": "narrative",
+      "dictation_path": "data/dictations/emergency_narrative/em_narrative_03.txt"
+    },
+    {
+      "case_id": "em_case_04",
+      "department": "emergency",
+      "source_fact_sha256": "c90b3f054543a3505a5f9d46230d3753c43b6b4cd89e1001aee51132d871bb0c",
+      "omitted_required_fields": [],
+      "omitted_field_rule_ids": {},
+      "record_id": "em_04",
+      "input_style": "fragmented",
+      "dictation_path": "data/dictations/em_04.txt"
+    },
+    {
+      "case_id": "em_case_04",
+      "department": "emergency",
+      "source_fact_sha256": "c90b3f054543a3505a5f9d46230d3753c43b6b4cd89e1001aee51132d871bb0c",
+      "omitted_required_fields": [],
+      "omitted_field_rule_ids": {},
+      "record_id": "em_narrative_04",
+      "input_style": "narrative",
+      "dictation_path": "data/dictations/emergency_narrative/em_narrative_04.txt"
+    },
+    {
+      "case_id": "em_case_05",
+      "department": "emergency",
+      "source_fact_sha256": "097942d2f64a82eca07af267945a534b6edc4b4c9aa2bd2d4e51a09e846ed85b",
+      "omitted_required_fields": [],
+      "omitted_field_rule_ids": {},
+      "record_id": "em_05",
+      "input_style": "fragmented",
+      "dictation_path": "data/dictations/em_05.txt"
+    },
+    {
+      "case_id": "em_case_05",
+      "department": "emergency",
+      "source_fact_sha256": "097942d2f64a82eca07af267945a534b6edc4b4c9aa2bd2d4e51a09e846ed85b",
+      "omitted_required_fields": [],
+      "omitted_field_rule_ids": {},
+      "record_id": "em_narrative_05",
+      "input_style": "narrative",
+      "dictation_path": "data/dictations/emergency_narrative/em_narrative_05.txt"
+    },
+    {
+      "case_id": "em_case_06",
+      "department": "emergency",
+      "source_fact_sha256": "f652fadbdaec6a85794dd343b605d103550ea91917889ab872ce30f150ee08db",
+      "omitted_required_fields": [
+        "allergy_history"
+      ],
+      "omitted_field_rule_ids": {
+        "allergy_history": "EM-REQ-301"
+      },
+      "record_id": "em_06",
+      "input_style": "fragmented",
+      "dictation_path": "data/dictations/em_06.txt"
+    },
+    {
+      "case_id": "em_case_06",
+      "department": "emergency",
+      "source_fact_sha256": "f652fadbdaec6a85794dd343b605d103550ea91917889ab872ce30f150ee08db",
+      "omitted_required_fields": [
+        "allergy_history"
+      ],
+      "omitted_field_rule_ids": {
+        "allergy_history": "EM-REQ-301"
+      },
+      "record_id": "em_narrative_06",
+      "input_style": "narrative",
+      "dictation_path": "data/dictations/emergency_narrative/em_narrative_06.txt"
+    },
+    {
+      "case_id": "em_case_07",
+      "department": "emergency",
+      "source_fact_sha256": "2c6809daa3c4cce9cc816989a0016abff185ddc55cb649c9f80ff1fa88a18a43",
+      "omitted_required_fields": [],
+      "omitted_field_rule_ids": {},
+      "record_id": "em_07",
+      "input_style": "fragmented",
+      "dictation_path": "data/dictations/em_07.txt"
+    },
+    {
+      "case_id": "em_case_07",
+      "department": "emergency",
+      "source_fact_sha256": "2c6809daa3c4cce9cc816989a0016abff185ddc55cb649c9f80ff1fa88a18a43",
+      "omitted_required_fields": [],
+      "omitted_field_rule_ids": {},
+      "record_id": "em_narrative_07",
+      "input_style": "narrative",
+      "dictation_path": "data/dictations/emergency_narrative/em_narrative_07.txt"
+    },
+    {
+      "case_id": "em_case_08",
+      "department": "emergency",
+      "source_fact_sha256": "f077ce28bcb52a93294cc64eb4270cd6c4f8bf289369a1147ca68a930ae3a7fa",
+      "omitted_required_fields": [],
+      "omitted_field_rule_ids": {},
+      "record_id": "em_08",
+      "input_style": "fragmented",
+      "dictation_path": "data/dictations/em_08.txt"
+    },
+    {
+      "case_id": "em_case_08",
+      "department": "emergency",
+      "source_fact_sha256": "f077ce28bcb52a93294cc64eb4270cd6c4f8bf289369a1147ca68a930ae3a7fa",
+      "omitted_required_fields": [],
+      "omitted_field_rule_ids": {},
+      "record_id": "em_narrative_08",
+      "input_style": "narrative",
+      "dictation_path": "data/dictations/emergency_narrative/em_narrative_08.txt"
+    },
+    {
+      "case_id": "em_case_09",
+      "department": "emergency",
+      "source_fact_sha256": "e01a73b4c1298321bd2af5df3f29fca112a0c32e01b115791e8962afc8af4c35",
+      "omitted_required_fields": [
+        "vital_signs.SpO2"
+      ],
+      "omitted_field_rule_ids": {
+        "vital_signs.SpO2": "EM-FMT-402"
+      },
+      "record_id": "em_09",
+      "input_style": "fragmented",
+      "dictation_path": "data/dictations/em_09.txt"
+    },
+    {
+      "case_id": "em_case_09",
+      "department": "emergency",
+      "source_fact_sha256": "e01a73b4c1298321bd2af5df3f29fca112a0c32e01b115791e8962afc8af4c35",
+      "omitted_required_fields": [
+        "vital_signs.SpO2"
+      ],
+      "omitted_field_rule_ids": {
+        "vital_signs.SpO2": "EM-FMT-402"
+      },
+      "record_id": "em_narrative_09",
+      "input_style": "narrative",
+      "dictation_path": "data/dictations/emergency_narrative/em_narrative_09.txt"
+    },
+    {
+      "case_id": "em_case_10",
+      "department": "emergency",
+      "source_fact_sha256": "dc03effbe95ccb0a16547951a7ca24a7e0ce0f339541de5fd9a52f8c56fce2c7",
+      "omitted_required_fields": [],
+      "omitted_field_rule_ids": {},
+      "record_id": "em_10",
+      "input_style": "fragmented",
+      "dictation_path": "data/dictations/em_10.txt"
+    },
+    {
+      "case_id": "em_case_10",
+      "department": "emergency",
+      "source_fact_sha256": "dc03effbe95ccb0a16547951a7ca24a7e0ce0f339541de5fd9a52f8c56fce2c7",
+      "omitted_required_fields": [],
+      "omitted_field_rule_ids": {},
+      "record_id": "em_narrative_10",
+      "input_style": "narrative",
+      "dictation_path": "data/dictations/emergency_narrative/em_narrative_10.txt"
+    },
+    {
+      "case_id": "em_case_11",
+      "department": "emergency",
+      "source_fact_sha256": "4e6a31067b149938d4f600d501b372ec1977995d22e017eba7a9847571889ac2",
+      "omitted_required_fields": [],
+      "omitted_field_rule_ids": {},
+      "record_id": "em_11",
+      "input_style": "fragmented",
+      "dictation_path": "data/dictations/em_11.txt"
+    },
+    {
+      "case_id": "em_case_11",
+      "department": "emergency",
+      "source_fact_sha256": "4e6a31067b149938d4f600d501b372ec1977995d22e017eba7a9847571889ac2",
+      "omitted_required_fields": [],
+      "omitted_field_rule_ids": {},
+      "record_id": "em_narrative_11",
+      "input_style": "narrative",
+      "dictation_path": "data/dictations/emergency_narrative/em_narrative_11.txt"
+    },
+    {
+      "case_id": "em_case_12",
+      "department": "emergency",
+      "source_fact_sha256": "502a816826646fbe40441e6db4b6f1848058fa102ae38388d6975056ce07b116",
+      "omitted_required_fields": [],
+      "omitted_field_rule_ids": {},
+      "record_id": "em_12",
+      "input_style": "fragmented",
+      "dictation_path": "data/dictations/em_12.txt"
+    },
+    {
+      "case_id": "em_case_12",
+      "department": "emergency",
+      "source_fact_sha256": "502a816826646fbe40441e6db4b6f1848058fa102ae38388d6975056ce07b116",
+      "omitted_required_fields": [],
+      "omitted_field_rule_ids": {},
+      "record_id": "em_narrative_12",
+      "input_style": "narrative",
+      "dictation_path": "data/dictations/emergency_narrative/em_narrative_12.txt"
+    },
+    {
+      "case_id": "em_case_13",
+      "department": "emergency",
+      "source_fact_sha256": "65b6fc85767cc2c142475a30ccab3b7760538b98890e30df013f780bf11a17a3",
+      "omitted_required_fields": [],
+      "omitted_field_rule_ids": {},
+      "record_id": "em_13",
+      "input_style": "fragmented",
+      "dictation_path": "data/dictations/em_13.txt"
+    },
+    {
+      "case_id": "em_case_13",
+      "department": "emergency",
+      "source_fact_sha256": "65b6fc85767cc2c142475a30ccab3b7760538b98890e30df013f780bf11a17a3",
+      "omitted_required_fields": [],
+      "omitted_field_rule_ids": {},
+      "record_id": "em_narrative_13",
+      "input_style": "narrative",
+      "dictation_path": "data/dictations/emergency_narrative/em_narrative_13.txt"
+    },
+    {
+      "case_id": "em_case_14",
+      "department": "emergency",
+      "source_fact_sha256": "f6d2b8d9f305fb5fae4f979701aabff9f1648a0d8b9a532765ad9ec6be434ba5",
+      "omitted_required_fields": [],
+      "omitted_field_rule_ids": {},
+      "record_id": "em_14",
+      "input_style": "fragmented",
+      "dictation_path": "data/dictations/em_14.txt"
+    },
+    {
+      "case_id": "em_case_14",
+      "department": "emergency",
+      "source_fact_sha256": "f6d2b8d9f305fb5fae4f979701aabff9f1648a0d8b9a532765ad9ec6be434ba5",
+      "omitted_required_fields": [],
+      "omitted_field_rule_ids": {},
+      "record_id": "em_narrative_14",
+      "input_style": "narrative",
+      "dictation_path": "data/dictations/emergency_narrative/em_narrative_14.txt"
+    },
+    {
+      "case_id": "em_case_15",
+      "department": "emergency",
+      "source_fact_sha256": "5b94c1f4211b17250efb3a3b941de9b4ee657f091bf605d0656ca6774615e7c6",
+      "omitted_required_fields": [
+        "visit_time"
+      ],
+      "omitted_field_rule_ids": {
+        "visit_time": "EM-REQ-001"
+      },
+      "record_id": "em_15",
+      "input_style": "fragmented",
+      "dictation_path": "data/dictations/em_15.txt"
+    },
+    {
+      "case_id": "em_case_15",
+      "department": "emergency",
+      "source_fact_sha256": "5b94c1f4211b17250efb3a3b941de9b4ee657f091bf605d0656ca6774615e7c6",
+      "omitted_required_fields": [
+        "visit_time"
+      ],
+      "omitted_field_rule_ids": {
+        "visit_time": "EM-REQ-001"
+      },
+      "record_id": "em_narrative_15",
+      "input_style": "narrative",
+      "dictation_path": "data/dictations/emergency_narrative/em_narrative_15.txt"
+    },
+    {
+      "case_id": "em_case_16",
+      "department": "emergency",
+      "source_fact_sha256": "e471860f5decfec81c1b56cdc20973cd42b264819dcee0f4468c4cac78f433ec",
+      "omitted_required_fields": [],
+      "omitted_field_rule_ids": {},
+      "record_id": "em_16",
+      "input_style": "fragmented",
+      "dictation_path": "data/dictations/em_16.txt"
+    },
+    {
+      "case_id": "em_case_16",
+      "department": "emergency",
+      "source_fact_sha256": "e471860f5decfec81c1b56cdc20973cd42b264819dcee0f4468c4cac78f433ec",
+      "omitted_required_fields": [],
+      "omitted_field_rule_ids": {},
+      "record_id": "em_narrative_16",
+      "input_style": "narrative",
+      "dictation_path": "data/dictations/emergency_narrative/em_narrative_16.txt"
+    },
+    {
+      "case_id": "em_case_17",
+      "department": "emergency",
+      "source_fact_sha256": "1a6e39ea9fa47279e1a2c60d979ebfea762bda2c335e61d5887818a3a39e14b5",
+      "omitted_required_fields": [],
+      "omitted_field_rule_ids": {},
+      "record_id": "em_17",
+      "input_style": "fragmented",
+      "dictation_path": "data/dictations/em_17.txt"
+    },
+    {
+      "case_id": "em_case_17",
+      "department": "emergency",
+      "source_fact_sha256": "1a6e39ea9fa47279e1a2c60d979ebfea762bda2c335e61d5887818a3a39e14b5",
+      "omitted_required_fields": [],
+      "omitted_field_rule_ids": {},
+      "record_id": "em_narrative_17",
+      "input_style": "narrative",
+      "dictation_path": "data/dictations/emergency_narrative/em_narrative_17.txt"
+    },
+    {
+      "case_id": "em_case_18",
+      "department": "emergency",
+      "source_fact_sha256": "7515964c7b309ac3fac3bd5052052b3912b2927bf035ed8c7ecce5488ecaee5d",
+      "omitted_required_fields": [
+        "disposition"
+      ],
+      "omitted_field_rule_ids": {
+        "disposition": "EM-REQ-801"
+      },
+      "record_id": "em_18",
+      "input_style": "fragmented",
+      "dictation_path": "data/dictations/em_18.txt"
+    },
+    {
+      "case_id": "em_case_18",
+      "department": "emergency",
+      "source_fact_sha256": "7515964c7b309ac3fac3bd5052052b3912b2927bf035ed8c7ecce5488ecaee5d",
+      "omitted_required_fields": [
+        "disposition"
+      ],
+      "omitted_field_rule_ids": {
+        "disposition": "EM-REQ-801"
+      },
+      "record_id": "em_narrative_18",
+      "input_style": "narrative",
+      "dictation_path": "data/dictations/emergency_narrative/em_narrative_18.txt"
+    },
+    {
+      "case_id": "em_case_19",
+      "department": "emergency",
+      "source_fact_sha256": "f50ab7c69de2ac6b1783bca78e1746eeb8ab31d1aa2abe00549a148e9b5c6bd0",
+      "omitted_required_fields": [],
+      "omitted_field_rule_ids": {},
+      "record_id": "em_19",
+      "input_style": "fragmented",
+      "dictation_path": "data/dictations/em_19.txt"
+    },
+    {
+      "case_id": "em_case_19",
+      "department": "emergency",
+      "source_fact_sha256": "f50ab7c69de2ac6b1783bca78e1746eeb8ab31d1aa2abe00549a148e9b5c6bd0",
+      "omitted_required_fields": [],
+      "omitted_field_rule_ids": {},
+      "record_id": "em_narrative_19",
+      "input_style": "narrative",
+      "dictation_path": "data/dictations/emergency_narrative/em_narrative_19.txt"
+    },
+    {
+      "case_id": "em_case_20",
+      "department": "emergency",
+      "source_fact_sha256": "aa63fffd3d9b7010612438057dc7a64742eeaa14d08cd786fbda2921d8e5ab69",
+      "omitted_required_fields": [
+        "emergency_treatment"
+      ],
+      "omitted_field_rule_ids": {
+        "emergency_treatment": "EM-REQ-701"
+      },
+      "record_id": "em_20",
+      "input_style": "fragmented",
+      "dictation_path": "data/dictations/em_20.txt"
+    },
+    {
+      "case_id": "em_case_20",
+      "department": "emergency",
+      "source_fact_sha256": "aa63fffd3d9b7010612438057dc7a64742eeaa14d08cd786fbda2921d8e5ab69",
+      "omitted_required_fields": [
+        "emergency_treatment"
+      ],
+      "omitted_field_rule_ids": {
+        "emergency_treatment": "EM-REQ-701"
+      },
+      "record_id": "em_narrative_20",
+      "input_style": "narrative",
+      "dictation_path": "data/dictations/emergency_narrative/em_narrative_20.txt"
+    }
+  ]
+}
