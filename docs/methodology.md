@@ -1,5 +1,7 @@
 # Methodology
 
+**English** · [中文](methodology.zh-CN.md)
+
 This repository is a public, synthetic-data reconstruction of a clinical-documentation conformance pipeline. It evaluates the behavior of a constraint layer; it does not reproduce a hospital system or claim clinical validity.
 
 ## Rule provenance

@@ -20,7 +20,7 @@
   <img src="./assets/readme/architecture.svg" width="100%" alt="One record through one arm: declared ground truth and provenance-checked rules enter a loop in which the only model call produces text a deterministic validator checks, a source-aware partition decides whether a violation may be retried, and every attempt is appended to a run log the evaluator turns into conformance, grounding, and joint metrics">
 </p>
 
-这里的"有据"被刻意限定为受 manifest 控制的缺失项，而不是每一条事实性陈述。结果与失败分析见[完整报告](results/report.md)，来源、语料设计、指标定义、重试策略和日志完整性细节见[方法学](docs/methodology.md)，流水线为什么是这个形状、每个选择付出了什么代价见[设计决策](docs/decisions.zh-CN.md)。
+这里的"有据"被刻意限定为受 manifest 控制的缺失项，而不是每一条事实性陈述。结果与失败分析见[完整报告](results/report.md)，来源、语料设计、指标定义、重试策略和日志完整性细节见[方法学](docs/methodology.zh-CN.md)，流水线为什么是这个形状、每个选择付出了什么代价见[设计决策](docs/decisions.zh-CN.md)。
 
 ## 跑起来
 
