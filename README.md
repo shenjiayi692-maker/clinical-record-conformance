@@ -2,6 +2,8 @@
   <img src="./assets/readme/hero.svg" width="100%" alt="Clinical Record Conformance benchmark comparing three documentation generation pipelines">
 </p>
 
+<p align="center"><strong>English</strong> · <a href="./README.zh-CN.md">中文</a></p>
+
 This public, synthetic-data reconstruction asks a narrow question: what should a clinical-documentation constraint layer optimize? In the committed run, prompt-only free-text generation had the highest raw conformance at 93.3%, but it populated 10 of 12 fields deliberately absent from the source; Arm C reported the gaps instead of silently completing them.
 
 Raw conformance alone is therefore the wrong headline. On `conformant_and_grounded`—passing every rule without filling a controlled omission—the ranking reverses: C reaches 80.0% and A falls to 78.3%. Arm C retries recovered 3 of 3 model extraction or formatting failures and 0 of 11 source-information absences, so the validator's useful role is routing: model errors go back to the model, missing facts go to a human.

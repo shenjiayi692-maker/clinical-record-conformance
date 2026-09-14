@@ -2,6 +2,8 @@
 
 # Design decisions
 
+**English** · [中文](decisions.zh-CN.md)
+
 [`methodology.md`](./methodology.md) states what this benchmark does. This document states why, what the alternative was, and what the choice cost. Five decisions mattered more than the rest.
 
 ## The validator never calls a model
