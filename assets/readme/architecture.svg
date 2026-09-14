@@ -1,0 +1,124 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700" role="img" aria-labelledby="t d">
+  <title id="t">Clinical Record Conformance data flow</title>
+  <desc id="d">One record through one arm: declared ground truth and provenance-checked rules enter a loop in which the only model call produces text that a deterministic validator checks, a source-aware partition decides whether a violation may be retried, and every attempt is appended to a run log that the evaluator turns into conformance, grounding, and joint metrics.</desc>
+  <rect width="1200" height="700" rx="18" fill="#f4f1e9"/>
+
+  <g font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
+    <text x="52" y="52" fill="#7c3028" font-size="14" font-weight="800" letter-spacing="2.4">DATA FLOW · ONE RECORD, ONE ARM</text>
+    <text x="52" y="86" fill="#161b20" font-size="27" font-weight="740">Where the model runs, and where it is not allowed to</text>
+
+    <g font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-size="12.5">
+      <rect x="812" y="34" width="14" height="14" rx="3" fill="#7c3028"/>
+      <text x="836" y="46" fill="#595d5c">model output — untrusted</text>
+      <rect x="1010" y="34" width="14" height="14" rx="3" fill="#314f59"/>
+      <text x="1034" y="46" fill="#595d5c">deterministic</text>
+    </g>
+
+    <!-- ============ INPUTS ============ -->
+    <text x="52" y="128" fill="#575b59" font-size="13" font-weight="750" letter-spacing="1.6">DECLARED BEFORE THE RUN</text>
+
+    <g>
+      <rect x="52" y="142" width="348" height="104" rx="10" fill="#ffffff" stroke="#b8b4aa"/>
+      <rect x="52" y="142" width="4" height="104" rx="2" fill="#314f59"/>
+      <text x="74" y="172" fill="#161b20" font-size="15" font-weight="720" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">schemas/*.json</text>
+      <text x="74" y="199" fill="#595d5c" font-size="13.5">Every rule declares a source. Loading fails</text>
+      <text x="74" y="219" fill="#595d5c" font-size="13.5">if it cites neither the public national standard</text>
+      <text x="74" y="239" fill="#595d5c" font-size="13.5">nor the synthetic departmental template.</text>
+    </g>
+
+    <g>
+      <rect x="426" y="142" width="348" height="104" rx="10" fill="#ffffff" stroke="#b8b4aa"/>
+      <rect x="426" y="142" width="4" height="104" rx="2" fill="#314f59"/>
+      <text x="448" y="172" fill="#161b20" font-size="15" font-weight="720" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">data/manifest.json</text>
+      <text x="448" y="199" fill="#595d5c" font-size="13.5">Names every required field deliberately left</text>
+      <text x="448" y="219" fill="#595d5c" font-size="13.5">out of the source, plus a fact fingerprint.</text>
+      <text x="448" y="239" fill="#7c3028" font-size="13.5" font-weight="620">Ground truth, not post-hoc judgment.</text>
+    </g>
+
+    <g>
+      <rect x="800" y="142" width="348" height="104" rx="10" fill="#ffffff" stroke="#b8b4aa"/>
+      <rect x="800" y="142" width="4" height="104" rx="2" fill="#314f59"/>
+      <text x="822" y="172" fill="#161b20" font-size="15" font-weight="720" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">data/dictations/*.txt</text>
+      <text x="822" y="199" fill="#595d5c" font-size="13.5">60 wholly synthetic records over 40 cases.</text>
+      <text x="822" y="219" fill="#595d5c" font-size="13.5">Each emergency case exists twice: ordered</text>
+      <text x="822" y="239" fill="#595d5c" font-size="13.5">and fragmented, same fact fingerprint.</text>
+    </g>
+
+    <path d="M226 246 V286" stroke="#979991" stroke-width="1.5"/>
+    <path d="M600 246 V286" stroke="#979991" stroke-width="1.5"/>
+    <path d="M974 246 V286" stroke="#979991" stroke-width="1.5"/>
+
+    <!-- ============ LOOP ============ -->
+    <rect x="52" y="286" width="1096" height="232" rx="12" fill="#ece8de" stroke="#b8b4aa" stroke-dasharray="6 4"/>
+    <text x="74" y="313" fill="#575b59" font-size="13" font-weight="750" letter-spacing="1.6">ATTEMPT LOOP · UP TO 3 ATTEMPTS, ARM C ONLY</text>
+
+    <!-- box 1 -->
+    <rect x="74" y="330" width="208" height="82" rx="9" fill="#314f59"/>
+    <text x="94" y="358" fill="#f4f1e9" font-size="14.5" font-weight="720">Build request</text>
+    <text x="94" y="381" fill="#cfdde1" font-size="12.5">Arm A: prose instructions</text>
+    <text x="94" y="399" fill="#cfdde1" font-size="12.5">Arm B/C: strict JSON schema</text>
+
+    <path d="M282 371 H322" stroke="#575b59" stroke-width="1.6"/>
+    <path d="M316 366 L326 371 L316 376 Z" fill="#575b59"/>
+
+    <!-- box 2: model -->
+    <rect x="326" y="330" width="208" height="82" rx="9" fill="#7c3028"/>
+    <text x="346" y="358" fill="#f4f1e9" font-size="14.5" font-weight="720">Model call</text>
+    <text x="346" y="381" fill="#e8d6d2" font-size="12.5">The only model call in the</text>
+    <text x="346" y="399" fill="#e8d6d2" font-size="12.5">entire system.</text>
+
+    <path d="M534 371 H574" stroke="#575b59" stroke-width="1.6"/>
+    <path d="M568 366 L578 371 L568 376 Z" fill="#575b59"/>
+
+    <!-- box 3: validate -->
+    <rect x="578" y="330" width="230" height="82" rx="9" fill="#314f59"/>
+    <text x="598" y="358" fill="#f4f1e9" font-size="14.5" font-weight="720">Parse and validate</text>
+    <text x="598" y="381" fill="#cfdde1" font-size="12.5">required · length · pattern ·</text>
+    <text x="598" y="399" fill="#cfdde1" font-size="12.5">numeric · order · timestamp</text>
+
+    <path d="M808 371 H848" stroke="#575b59" stroke-width="1.6"/>
+    <path d="M842 366 L852 371 L842 376 Z" fill="#575b59"/>
+
+    <!-- box 4: partition -->
+    <rect x="852" y="330" width="274" height="82" rx="9" fill="#314f59"/>
+    <text x="872" y="358" fill="#f4f1e9" font-size="14.5" font-weight="720">Partition each violation</text>
+    <text x="872" y="381" fill="#cfdde1" font-size="12.5">Re-reads the source text to ask:</text>
+    <text x="872" y="399" fill="#cfdde1" font-size="12.5">could a retry possibly fix this?</text>
+
+    <!-- feedback arc -->
+    <path d="M989 412 V452 H178 V412" fill="none" stroke="#7c3028" stroke-width="1.8"/>
+    <path d="M173 422 L178 410 L183 422 Z" fill="#7c3028"/>
+    <text x="400" y="444" fill="#7c3028" font-size="13" font-weight="680">repairable rules</text>
+    <text x="524" y="444" fill="#7c3028" font-size="13">— the request carries rule messages only, never the previous record</text>
+
+    <!-- halt exit -->
+    <path d="M1080 412 V480" stroke="#979991" stroke-width="1.5" stroke-dasharray="4 3"/>
+    <path d="M1075 470 L1080 482 L1085 470 Z" fill="#979991"/>
+    <text x="1126" y="502" fill="#595d5c" font-size="12.5" text-anchor="end">fact absent from source → human review, loop halts</text>
+
+    <!-- ============ OUTPUT ============ -->
+    <text x="52" y="556" fill="#575b59" font-size="13" font-weight="750" letter-spacing="1.6">EVERY ATTEMPT, NOT JUST THE LAST</text>
+
+    <rect x="52" y="570" width="348" height="92" rx="10" fill="#ffffff" stroke="#b8b4aa"/>
+    <rect x="52" y="570" width="4" height="92" rx="2" fill="#314f59"/>
+    <text x="74" y="600" fill="#161b20" font-size="15" font-weight="720" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">results/*.jsonl</text>
+    <text x="74" y="626" fill="#595d5c" font-size="13.5">Append-only. Each line stamps model, seed,</text>
+    <text x="74" y="646" fill="#595d5c" font-size="13.5">temperature and price; resume refuses to mix.</text>
+
+    <path d="M400 616 H444" stroke="#575b59" stroke-width="1.6"/>
+    <path d="M438 611 L448 616 L438 621 Z" fill="#575b59"/>
+
+    <rect x="448" y="570" width="230" height="92" rx="9" fill="#314f59"/>
+    <text x="468" y="600" fill="#f4f1e9" font-size="15" font-weight="720" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">evaluate.py</text>
+    <text x="468" y="626" fill="#cfdde1" font-size="13">Recomputes published</text>
+    <text x="468" y="646" fill="#cfdde1" font-size="13">numbers with no API key.</text>
+
+    <path d="M678 616 H722" stroke="#575b59" stroke-width="1.6"/>
+    <path d="M716 611 L726 616 L716 621 Z" fill="#575b59"/>
+
+    <rect x="726" y="570" width="422" height="92" rx="10" fill="#ffffff" stroke="#b8b4aa"/>
+    <text x="748" y="597" fill="#595d5c" font-size="13">Conformance — from the validator alone</text>
+    <text x="748" y="620" fill="#595d5c" font-size="13">Grounding — from the manifest alone</text>
+    <text x="748" y="646" fill="#7c3028" font-size="13.5" font-weight="700">Joint — must pass both. The headline number.</text>
+  </g>
+</svg>

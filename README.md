@@ -14,7 +14,11 @@ The paired input-shape experiment was a null result. Reordering and interrupting
 | B | Strict JSON template, one attempt | **76.7%** | 76.7% | 98.3% | 98.3% | **1 / 12** | $0.3525 |
 | C | JSON template plus source-aware validator loop | **80.0%** | 81.7% | 98.3% | 98.3% | **1 / 12** | $0.3704 |
 
-Grounding here is deliberately limited to manifest-controlled omissions, not every factual claim. See the [full report](results/report.md) for results and failure analysis, and [methodology](docs/methodology.md) for provenance, corpus design, metric definitions, retry policy, and log-integrity details.
+<p align="center">
+  <img src="./assets/readme/architecture.svg" width="100%" alt="One record through one arm: declared ground truth and provenance-checked rules enter a loop in which the only model call produces text a deterministic validator checks, a source-aware partition decides whether a violation may be retried, and every attempt is appended to a run log the evaluator turns into conformance, grounding, and joint metrics">
+</p>
+
+Grounding here is deliberately limited to manifest-controlled omissions, not every factual claim. See the [full report](results/report.md) for results and failure analysis, [methodology](docs/methodology.md) for provenance, corpus design, metric definitions, retry policy, and log-integrity details, and [design decisions](docs/decisions.md) for why the pipeline is shaped this way and what each choice cost.
 
 ## Run it
 
