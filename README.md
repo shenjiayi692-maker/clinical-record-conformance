@@ -2,76 +2,38 @@
   <img src="./assets/readme/hero.svg" width="100%" alt="Clinical Record Conformance benchmark comparing three documentation generation pipelines">
 </p>
 
-An offline research benchmark for a simple but consequential question: **does a more conformant clinical note remain grounded in the facts it was given?**
+This public, synthetic-data reconstruction asks a narrow question: what should a clinical-documentation constraint layer optimize? In the committed run, prompt-only free-text generation had the highest raw conformance at 93.3%, but it populated 10 of 12 fields deliberately absent from the source; Arm C reported the gaps instead of silently completing them.
 
-The repository compares prompt-only prose, strict structured output, and a source-aware validator loop on 60 wholly synthetic records. It contains no patient data, hospital templates, private code, or institutional results.
+Raw conformance alone is therefore the wrong headline. On `conformant_and_grounded`—passing every rule without filling a controlled omission—the ranking reverses: C reaches 80.0% and A falls to 78.3%. Arm C retries recovered 3 of 3 model extraction or formatting failures and 0 of 11 source-information absences, so the validator's useful role is routing: model errors go back to the model, missing facts go to a human.
 
-## Result at a glance
+The paired input-shape experiment was a null result. Reordering and interrupting otherwise identical facts did not consistently reduce conformance; Arm C was 70% for both narrative and fragmented inputs on the joint metric, and 100% for both across the 14 complete-source pairs. The full C pipeline cost 1.9× as much as A, although most of that gap was already present in template-only B and the three retrying records added 5.1% over B.
 
-| Arm | Method | Conformant + grounded | Raw conformance | Grounded records | Unsupported fills | Cost |
-| --- | --- | ---: | ---: | ---: | ---: | ---: |
-| A | Prose standard, free-text output | 78.3% | **93.3%** | 83.3% | **10 / 12** | $0.1958 |
-| B | Strict JSON, one attempt | 76.7% | 76.7% | **98.3%** | **1 / 12** | $0.3525 |
-| C | JSON + source-aware validator loop | **80.0%** | 81.7% | **98.3%** | **1 / 12** | $0.3704 |
+| Arm | Method | **Conformant and grounded** | Raw conformance | Source-grounded records | Required-field population | Unsupported fills | Cost |
+|---|---|---:|---:|---:|---:|---:|---:|
+| A | Prose standard, free-text output | **78.3%** | 93.3% | 83.3% | 100.0% | **10 / 12** | $0.1958 |
+| B | Strict JSON template, one attempt | **76.7%** | 76.7% | 98.3% | 98.3% | **1 / 12** | $0.3525 |
+| C | JSON template plus source-aware validator loop | **80.0%** | 81.7% | 98.3% | 98.3% | **1 / 12** | $0.3704 |
 
-Prompt-only generation looked best on raw conformance because it silently completed missing facts. The ranking reverses on the joint metric: Arm C is the strongest pipeline when a record must both pass validation and avoid manifest-controlled unsupported fills.
+Grounding here is deliberately limited to manifest-controlled omissions, not every factual claim. See the [full report](results/report.md) for results and failure analysis, and [methodology](docs/methodology.md) for provenance, corpus design, metric definitions, retry policy, and log-integrity details.
 
-These values are recomputed from [`results/final_run.jsonl`](./results/final_run.jsonl): 60 records generated with `gpt-4o-2024-08-06`, seed 7, and temperature 0.2. The full [report](./results/report.md) includes per-rule, latency, cost, recovery, grounding, and human-review details.
+## Run it
 
-## What the benchmark isolates
-
-### Missing information
-
-[`data/manifest.json`](./data/manifest.json) records every intentionally omitted required field and its expected rule violation. A plausible value in an omitted field is counted as an unsupported fill, even when it sounds clinically reasonable.
-
-| Failure diagnosis | Initial instances | Recovered |
-| --- | ---: | ---: |
-| Model extraction or formatting | 3 | **3 / 3** |
-| Source information absent | 11 | **0 / 11** |
-
-That zero is correct behavior: retries can repair model formatting, not recover facts that never existed in the source.
-
-### Input shape
-
-Each of 20 emergency cases has an ordered narrative and a fragmented counterpart with the same source-fact fingerprint. Fragmentation rearranges and repeats facts without deleting them.
-
-The paired result was null. Arm C reached 70% conformant + grounded in both conditions, and 100% in both after excluding the six pairs with intentional source omissions. The benchmark demonstrates source omission as a failure mechanism; it does not show that word-order disruption alone consistently reduces conformance.
-
-## Reproduce it
-
-Python 3.11 or newer is recommended.
+This is an offline batch experiment, not a service. The committed report can be reproduced without an API key.
 
 ```bash
 python3 -m venv .venv
 .venv/bin/python -m pip install -r requirements.txt
-cp .env.example .env
-```
-
-Recompute the published metrics without an API key and run the deterministic tests:
-
-```bash
-.venv/bin/python -m src.evaluate results/final_run.jsonl
 .venv/bin/python -m pytest -q
+.venv/bin/python -m src.evaluate results/final_run.jsonl --report results/report.md
 ```
 
-To generate a new three-arm run, set `OPENAI_API_KEY` in `.env` and run:
+To generate a new model run:
 
 ```bash
+cp .env.example .env  # then set OPENAI_API_KEY
 .venv/bin/python -m src.generate
 ```
 
-Interrupted runs can resume with `python -m src.generate --resume-log results/run_<timestamp>.jsonl`.
-
-## Design
-
-- [`schemas/`](./schemas/) separates public-clause provenance from a fictional departmental evaluation layer.
-- [`src/validator.py`](./src/validator.py) implements deterministic required, length, pattern, numeric, ordering, and timestamp checks without model calls.
-- [`src/generate.py`](./src/generate.py) runs the three arms and routes failures by root cause.
-- [`src/evaluate.py`](./src/evaluate.py) and [`src/report.py`](./src/report.py) calculate the joint metric, recovery, conformance, grounding, latency, and cost.
-- [`tests/`](./tests/) covers provenance, corpus pairing, omissions, feedback, validation, pipeline behavior, and resume semantics.
-
-The public baseline maps selected rules to the National Health Commission's [Basic Standards for Medical Record Writing](https://www.nhc.gov.cn/yzygj/c100068/201002/766b58f0dd9242d3b62276e5c88d27dc.shtml). Exact field layouts, character limits, terminology, ordering, and disposition vocabulary are synthetic evaluation choices.
-
 ## Scope
 
-This is an evaluation artifact, not a clinical product. It has no EHR integration, user interface, deployment service, agent framework, or protected health information. Its synthetic rules and findings must not be used for clinical, compliance, or documentation decisions.
+This is an evaluation artifact, not a clinical product. It has no user interface, agent framework, vector database, EHR integration, deployment configuration, protected health information, private source code, or hospital template. The production system that motivated this reconstruction used Qwen2.5-7B; the public benchmark uses `gpt-4o-2024-08-06` to avoid requiring reviewers to provision local 7B inference, and it evaluates constraint-layer behavior rather than claiming model equivalence. The synthetic rules and results must not be used for clinical, compliance, or documentation decisions.
