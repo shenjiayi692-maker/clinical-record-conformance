@@ -48,6 +48,17 @@ cp .env.example .env  # 然后填入 OPENAI_API_KEY
 .venv/bin/python -m src.generate
 ```
 
+这条流水线依赖的是 OpenAI 的 HTTP 协议而不是 OpenAI 这个服务,所以 `--base-url`
+可以把它指向任何兼容 OpenAI 接口的端点:
+
+```bash
+.venv/bin/python -m src.generate --base-url http://localhost:8080/v1 --input-cost 0 --output-cost 0
+```
+
+[local-model-serving](https://github.com/shenjiayi692-maker/local-model-serving)
+把 Qwen2.5-0.5B 装进容器并暴露成这样一个端点,同时公布了两个后端的对照:
+同一套评测程序、同一份语料、代码一行没改,量出商用 API 与自托管 0.5B 模型之间的真实差距。
+
 ## 范围
 
 这是一件评测产物，不是临床产品。它没有用户界面、没有 agent 框架、没有向量数据库、没有 EHR 集成、没有部署配置、不含受保护健康信息、不含私有源码、不含任何医院模板。促成这次复现的生产系统用的是 Qwen2.5-7B；公开基准改用 `gpt-4o-2024-08-06`，是为了不要求复核者自行部署本地 7B 推理，而且它评测的是约束层的行为，并不声称模型等价。这些合成规则和结果不得用于任何临床、合规或文书决策。

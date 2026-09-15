@@ -503,6 +503,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--limit", type=int, help="records per department and input style; useful for a smoke run")
     parser.add_argument("--resume-log", type=Path, help="append to a compatible partial JSONL run")
     parser.add_argument("--no-report", action="store_true", help="skip report and final-run copy")
+    parser.add_argument(
+        "--base-url",
+        default=os.getenv("OPENAI_BASE_URL"),
+        help="OpenAI-compatible endpoint to call instead of the OpenAI API, e.g. http://localhost:8080/v1",
+    )
     return parser.parse_args()
 
 
@@ -519,7 +524,7 @@ def main() -> None:
         output_cost_per_million=args.output_cost,
     )
     path = run_experiment(
-        OpenAI(max_retries=5),
+        OpenAI(max_retries=5, base_url=args.base_url),
         config,
         arms=tuple(args.arms),
         departments=set(args.departments),

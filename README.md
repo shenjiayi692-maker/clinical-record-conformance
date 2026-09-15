@@ -48,6 +48,18 @@ cp .env.example .env  # then set OPENAI_API_KEY
 .venv/bin/python -m src.generate
 ```
 
+The pipeline speaks the OpenAI HTTP schema rather than depending on the OpenAI
+service, so `--base-url` points it at any OpenAI-compatible endpoint:
+
+```bash
+.venv/bin/python -m src.generate --base-url http://localhost:8080/v1 --input-cost 0 --output-cost 0
+```
+
+[local-model-serving](https://github.com/shenjiayi692-maker/local-model-serving)
+packages Qwen2.5-0.5B behind such an endpoint in a container and publishes the
+two-backend comparison: the same harness, the same corpus, unchanged code, and
+the measured gap between a commercial API and a self-hosted 0.5B model.
+
 ## Scope
 
 This is an evaluation artifact, not a clinical product. It has no user interface, agent framework, vector database, EHR integration, deployment configuration, protected health information, private source code, or hospital template. The production system that motivated this reconstruction used Qwen2.5-7B; the public benchmark uses `gpt-4o-2024-08-06` to avoid requiring reviewers to provision local 7B inference, and it evaluates constraint-layer behavior rather than claiming model equivalence. The synthetic rules and results must not be used for clinical, compliance, or documentation decisions.
