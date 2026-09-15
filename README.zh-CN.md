@@ -4,6 +4,14 @@
 
 <p align="center"><a href="./README.md">English</a> · <strong>中文</strong></p>
 
+一个模型可以把病历写得通过每一条规则，同时凭空编造其中一半——而合规检查分不出这两者。这个基准测量的就是这道缝。
+
+```bash
+git clone https://github.com/shenjiayi692-maker/clinical-record-conformance && cd clinical-record-conformance && python3 -m venv .venv && .venv/bin/pip install -qr requirements.txt && .venv/bin/python -m src.evaluate results/final_run.jsonl --report /tmp/report.md && cat /tmp/report.md
+```
+
+这条命令从提交的运行日志重新算出公布的那张表。不需要 API key，不联网，不调模型。
+
 这是一次公开的、全合成数据的复现，只问一个很窄的问题：临床文书的约束层到底应该优化什么？在提交的这次运行里，纯 prompt 的自由文本生成拿到了最高的原始合规率 93.3%，但它填满了 12 个源文本中被刻意抹去的字段中的 10 个；Arm C 则把这些缺口报告出来，而不是默默补全。
 
 所以单看原始合规率是错误的头条指标。换成 `conformant_and_grounded`——既通过全部规则、又没有填任何一个受控缺失项——排名反转：C 达到 80.0%，A 跌到 78.3%。Arm C 的重试挽回了 3 个模型抽取或格式错误中的 3 个，以及 11 个源信息缺失中的 0 个。所以校验器真正有用的角色是路由：模型的错误退回给模型，缺失的事实交给人。

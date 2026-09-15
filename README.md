@@ -4,6 +4,14 @@
 
 <p align="center"><strong>English</strong> · <a href="./README.zh-CN.md">中文</a></p>
 
+A model can fill in a clinical record that passes every rule and still invent half of it — and a conformance check cannot tell the two apart. This benchmark measures that gap.
+
+```bash
+git clone https://github.com/shenjiayi692-maker/clinical-record-conformance && cd clinical-record-conformance && python3 -m venv .venv && .venv/bin/pip install -qr requirements.txt && .venv/bin/python -m src.evaluate results/final_run.jsonl --report /tmp/report.md && cat /tmp/report.md
+```
+
+That recomputes the published table from the committed run log. No API key, no network, no model call.
+
 This public, synthetic-data reconstruction asks a narrow question: what should a clinical-documentation constraint layer optimize? In the committed run, prompt-only free-text generation had the highest raw conformance at 93.3%, but it populated 10 of 12 fields deliberately absent from the source; Arm C reported the gaps instead of silently completing them.
 
 Raw conformance alone is therefore the wrong headline. On `conformant_and_grounded`—passing every rule without filling a controlled omission—the ranking reverses: C reaches 80.0% and A falls to 78.3%. Arm C retries recovered 3 of 3 model extraction or formatting failures and 0 of 11 source-information absences, so the validator's useful role is routing: model errors go back to the model, missing facts go to a human.
